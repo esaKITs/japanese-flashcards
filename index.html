@@ -1,0 +1,2503 @@
+<!doctype html>
+<!--
+  esaKITs — Japanese Flashcards
+  Copyright 2026 Tetsuya Esaki / esaKITs — Enhanced Smart AI Kits
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  If you modify and redistribute this file, retain the applicable copyright,
+  license, and attribution notices and add a prominent notice that you changed
+  this file, as required by Apache License 2.0.
+-->
+
+<!--
+Japanese Flashcards
+Copyright © 2026 Tetsuya Esaki and University of Yamanashi.
+All rights reserved.
+-->
+
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日本語フラッシュカード v1.19 / Japanese Flashcards</title>
+<style>
+@font-face{
+  font-family:"Flashcard HGP Kyokasho";
+  src:local("HGP教科書体"),local("HGP Kyokashotai");
+}
+@font-face{
+  font-family:"Flashcard MS PGothic";
+  src:local("MS PGothic"),local("ＭＳ Ｐゴシック"),local("MS P Gothic");
+}
+
+:root{
+  --bg:#f3f5f8; --panel:#ffffff; --text:#1d2433; --muted:#6d7480; --accent:#2f5ee5;
+  --source-bg:#ffffff; --target-bg:#f2f2f2; --source-text:#111827; --target-text:#2f5ee5; --source-font-size:150px; --target-font-size:150px; --source-font-family:"Yu Gothic","Meiryo",sans-serif; --target-font-family:"Yu Gothic","Meiryo",sans-serif; --source-font-weight:400; --target-font-weight:400; --third-bg:#ffffff; --third-text:#111827; --third-font-size:150px; --third-font-family:var(--source-font-family); --third-font-weight:400;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:1180px;margin:auto;padding:20px}
+.topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px}
+.mode-switch{display:flex;gap:8px}
+button,select,input,textarea{font:inherit}
+button{border:0;border-radius:12px;padding:10px 14px;background:#e7ebf3;cursor:pointer}
+button.primary{background:var(--accent);color:#fff}
+button.active{background:#111827;color:#fff}
+button.good{background:#118a4e;color:#fff}
+button.bad{background:#c43d3d;color:#fff}
+.panel{background:var(--panel);border-radius:18px;padding:16px;box-shadow:0 8px 30px rgba(17,24,39,.07);margin-bottom:16px}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--muted);font-weight:700}
+select,input[type="text"],input[type="number"],input[type="color"],textarea{
+  width:100%;border:1px solid #d7dce5;border-radius:10px;padding:10px;background:#fff;color:#111827
+}
+.group-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
+.group-row label{font-size:14px}
+.card-wrap{min-height:430px;min-width:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card{
+  width:100%;min-width:0;max-width:100%;min-height:360px;border-radius:26px;background:var(--source-bg);color:var(--source-text);
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;
+  line-height:1.35;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05),0 10px 34px rgba(0,0,0,.07);
+  user-select:none;
+}
+.card ruby rt{font-size:.34em;font-weight:500}
+.flash-text{
+  display:inline-block;
+  max-width:100%;
+  line-height:inherit;
+  vertical-align:baseline;
+}
+.flash-text ruby{
+  vertical-align:baseline;
+  ruby-position:over;
+}
+#questionCard{font-size:var(--source-font-size);font-family:var(--source-font-family);font-weight:var(--source-font-weight)}
+#answerCard{font-size:var(--target-font-size);font-family:var(--target-font-family);font-weight:var(--target-font-weight)}
+#learnerDisplay #card{font-size:var(--source-font-size);font-family:var(--source-font-family);font-weight:var(--source-font-weight)}
+.context-label{
+  font-size:50%;
+  font-weight:600;
+  vertical-align:baseline;
+  display:inline-block;
+  margin-right:.18em;
+}
+.nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.progress{text-align:center;color:var(--muted);margin-top:10px}
+.answer-area{max-width:680px;margin:16px auto 0}
+.answer-row{display:flex;gap:10px}
+.feedback{min-height:44px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#f6f7fa}
+.hidden{display:none!important}
+
+.version-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;background:#eef2ff;color:#3548a3;font-size:11px;font-weight:800;vertical-align:middle}
+.flash-panel-content{max-width:100%;max-height:100%;text-align:center}
+.wrap-auto{white-space:normal;overflow-wrap:anywhere;word-break:normal}
+.wrap-shrink{white-space:nowrap;overflow-wrap:normal;word-break:normal;overflow:hidden}
+.wrap-shrink .flash-text{max-width:none;white-space:nowrap}
+.wrap-manual{white-space:pre;overflow-wrap:normal;word-break:normal}
+.font-manager{margin-top:2px;border:1px dashed #cfd6e3;border-radius:12px;padding:10px 12px;background:#fff}
+.font-manager summary{font-weight:800;cursor:pointer}
+.font-manager-grid{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-top:10px}
+.font-manager-grid .wide{grid-column:1/-1}
+.font-actions{display:flex;gap:8px;flex-wrap:wrap}
+.font-actions button{white-space:nowrap}
+.font-preview{margin-top:10px;border:1px solid #d8dde8;border-radius:10px;padding:12px;background:#fafbfe;font-size:26px;line-height:1.5;min-height:72px}
+.font-preview small{display:block;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;color:var(--muted);margin-top:5px}
+.font-status{margin-top:8px;padding:8px 10px;border-radius:8px;background:#f6f7fa;color:#596170;font-size:12px;line-height:1.45}
+.font-status.ok{background:#edf8f1;color:#17653a}
+.font-status.warn{background:#fff7e8;color:#8a5a00}
+.font-status.error{background:#fff1f1;color:#9b2323}
+
+.font-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-top:10px;max-height:260px;overflow:auto}
+.font-chip{border:1px solid #d8dde8;border-radius:10px;padding:10px;background:#fff;text-align:left;cursor:pointer;min-height:62px}
+.font-chip:hover{background:#f7f9fd}.font-chip strong{display:block;font-size:12px;margin-bottom:4px}.font-chip span{display:block;font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.font-chip.selected-font{
+  background:#eef3ff;
+  color:var(--text);
+  border-color:#8ea5f2;
+  box-shadow:0 0 0 1px #8ea5f2 inset;
+}
+.font-chip.selected-font strong{color:#26345f}
+.font-chip.selected-font::after{
+  content:"選択中";
+  display:inline-block;
+  margin-top:6px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:#dce6ff;
+  color:#3548a3;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:10px;
+  font-weight:800;
+}
+
+.inline-font-preview{
+  margin-top:6px;
+  padding:8px 10px;
+  border:1px solid #e0e5ee;
+  border-radius:9px;
+  background:#fafbfc;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.inline-font-preview .preview-label{
+  flex:0 0 auto;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:11px;
+  color:var(--muted);
+  font-weight:700;
+}
+.inline-font-preview .preview-text{
+  min-width:0;
+  font-size:21px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.dataset-box{
+  margin:0 0 14px;
+  padding:12px 14px;
+  border:1px solid #dce3ee;
+  border-radius:12px;
+  background:#f8faff;
+}
+.dataset-box-title{font-weight:800;margin-bottom:5px}
+.dataset-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.dataset-actions button{min-height:40px}
+#thirdCardWrap,#fullscreenThird{display:none!important}
+body.panel3-enabled #thirdCardWrap{display:flex!important}
+body.panel3-enabled #fullscreenThird{display:flex!important}
+details summary{cursor:pointer;font-weight:800}
+.settings-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+.import-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.small{font-size:12px;color:var(--muted);line-height:1.5}
+.status-pill{display:inline-block;border-radius:999px;padding:5px 9px;background:#eef2ff;color:#3548a3;font-size:12px;font-weight:700}
+.learner-heading{font-weight:800;font-size:18px;margin-bottom:10px}
+
+body.fullscreen-teacher{
+  overflow:hidden;
+  background:var(--source-bg);
+}
+body.fullscreen-teacher .app{
+  max-width:none;
+  width:100vw;
+  height:100vh;
+  padding:0;
+}
+body.fullscreen-teacher .topbar,
+body.fullscreen-teacher .teacher-toolbar,
+body.fullscreen-teacher #teacherControls,
+body.fullscreen-teacher #learnerControls,
+body.fullscreen-teacher #teacherNav,
+body.fullscreen-teacher #learnerArea{
+  display:none!important;
+}
+body.fullscreen-teacher .panel{
+  margin:0;
+  padding:0;
+  border-radius:0;
+  box-shadow:none;
+  width:100vw;
+  height:100vh;
+  background:var(--source-bg);
+}
+body.fullscreen-teacher #teacherDisplay{
+  display:grid!important;
+  grid-template-rows:1fr 1fr;
+  width:100vw;
+  height:100vh;
+  gap:0;
+}
+body.fullscreen-teacher #teacherDisplay .card-wrap{
+  min-height:0!important;
+  height:50vh;
+  margin:0!important;
+}
+body.fullscreen-teacher #teacherDisplay .card{
+  min-height:0!important;
+  height:100%;
+  border-radius:0;
+  box-shadow:none;
+  border:0;
+}
+.fullscreen-exit{
+  position:fixed;
+  top:12px;
+  right:12px;
+  z-index:9999;
+  display:none;
+  opacity:.72;
+}
+body.fullscreen-teacher .fullscreen-exit{display:block}
+
+
+.teacher-stage{
+  position:relative;
+}
+
+#teacherDisplay{
+  display:grid;
+  grid-template-rows:1fr 1fr;
+  gap:12px;
+  height:620px;
+}
+#teacherDisplay .card-wrap{
+  min-height:0!important;
+  height:100%;
+  margin:0!important;
+}
+#teacherDisplay .card{
+  min-height:0!important;
+  height:100%;
+  overflow:hidden;
+}
+
+.teacher-toolbar{
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:20;
+}
+.teacher-toolbar button{
+  min-width:120px;
+}
+#teacherNav .nav{
+  display:grid;
+  grid-template-columns:140px 180px 140px;
+  justify-content:center;
+  align-items:center;
+  gap:14px;
+  min-height:54px;
+}
+#teacherNav .nav button{
+  height:46px;
+  margin:0;
+}
+#teacherProgress{
+  min-height:28px;
+  line-height:28px;
+  text-align:center;
+}
+
+
+.display-settings-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);
+  gap:20px;
+  align-items:start;
+  margin-top:12px;
+}
+.display-setting-groups{display:grid;gap:14px}
+.half-setting{
+  border:1px solid #d8dde8;
+  border-radius:12px;
+  padding:14px;
+  background:#fafbfe;
+}
+.half-setting h4{margin:0 0 10px;font-size:15px}
+.settings-preview{
+  position:sticky;
+  top:16px;
+  border:1px solid #d8dde8;
+  border-radius:14px;
+  padding:12px;
+  background:#fff;
+}
+.settings-preview-title{font-weight:700;margin-bottom:8px}
+.preview-half{
+  height:150px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  overflow:hidden;
+  border:1px solid rgba(0,0,0,.08);
+  font-family:inherit;
+  font-weight:inherit;
+  line-height:1.25;
+}
+#previewUpper{border-radius:10px 10px 0 0}
+#previewLower{border-radius:0 0 10px 10px;border-top:0}
+#previewUpper,#previewLower{
+  cursor:pointer;
+  transition:box-shadow .16s ease, opacity .16s ease;
+}
+#previewUpper:hover,#previewLower:hover{
+  box-shadow:inset 0 0 0 2px rgba(47,94,229,.45);
+}
+#previewUpper.preview-selected,#previewLower.preview-selected{
+  box-shadow:inset 0 0 0 3px var(--accent);
+}
+.half-setting.settings-selected{
+  border-color:#8ea5f2;
+  box-shadow:0 0 0 2px rgba(47,94,229,.12);
+  background:#f8faff;
+}
+.preview-click-hint{
+  margin-top:8px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.45;
+}
+@media (max-width:900px){
+  .display-settings-layout{grid-template-columns:1fr}
+  .settings-preview{position:static}
+}
+
+@media (max-width:800px){
+ #teacherDisplay{height:520px}
+ .controls,.settings-grid,.import-grid{grid-template-columns:1fr 1fr}
+ #questionCard{font-size:min(var(--source-font-size),15vw)} #answerCard{font-size:min(var(--target-font-size),15vw)} #learnerDisplay #card{font-size:min(var(--source-font-size),15vw);min-height:300px}
+}
+@media (max-width:520px){
+ #teacherDisplay{height:440px}
+ .controls,.settings-grid,.import-grid{grid-template-columns:1fr}
+ .answer-row{flex-direction:column}
+}
+
+/* Dedicated fullscreen overlay: exact 50/50 split */
+#fullscreenOverlay{
+  display:none;
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+  cursor:pointer;
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  z-index:9998;
+  background:#fff;
+  overflow:hidden;
+}
+body.fullscreen-teacher #fullscreenOverlay{
+  display:flex;
+  flex-direction:column;
+}
+#fullscreenQuestion,
+#fullscreenAnswer,
+#fullscreenThird{
+  flex:0 0 50%;
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+  width:100%;
+  height:50%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:20px;
+  overflow:hidden;
+  box-sizing:border-box;
+  line-height:1.25;
+}
+#fullscreenQuestion{
+  font-size:var(--source-font-size);
+  font-family:var(--source-font-family);
+  font-weight:var(--source-font-weight);
+  color:var(--source-text);
+  background:var(--source-bg);
+}
+#fullscreenAnswer{
+  font-size:var(--target-font-size);
+  font-family:var(--target-font-family);
+  font-weight:var(--target-font-weight);
+  color:var(--target-text);
+  background:var(--target-bg);
+}
+#fullscreenThird{
+  font-size:var(--third-font-size);
+  font-family:var(--third-font-family);
+  font-weight:var(--third-font-weight);
+  color:var(--third-text);
+  background:var(--third-bg);
+}
+#fullscreenOverlay ruby rt{font-size:.34em;font-weight:500}
+#fullscreenOverlay .flash-text{display:inline-block;vertical-align:baseline}
+body.fullscreen-teacher .app{visibility:hidden}
+body.fullscreen-teacher #fullscreenOverlay,
+body.fullscreen-teacher .fullscreen-exit{visibility:visible}
+
+
+.settings-details > summary{
+  list-style:none;
+}
+.settings-details > summary::-webkit-details-marker{display:none}
+.settings-summary-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  cursor:pointer;
+}
+.settings-summary-title{
+  font-weight:700;
+}
+.settings-summary-actions{
+  margin-left:auto;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.settings-summary-actions button{
+  white-space:nowrap;
+}
+
+
+.menu-details > summary{
+  list-style:none;
+  cursor:pointer;
+  font-weight:700;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.menu-details > summary::-webkit-details-marker{display:none}
+.menu-title::before{
+  content:"▼ ";
+}
+.menu-details[open] .menu-title::before{
+  content:"▲ ";
+}
+
+
+.settings-menu-box{
+  background:#fff;
+  border:1px solid #d8dde8;
+  border-radius:14px;
+  padding:0 16px;
+  margin-top:14px;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+}
+.settings-menu-box > details{
+  margin:0!important;
+  padding:12px 0;
+}
+.settings-menu-box > details + details{
+  border-top:1px solid #e5e7eb;
+}
+
+
+.import-message{
+  display:none;
+  margin:10px 0 2px;
+  padding:10px 12px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:14px;
+}
+.import-message.success{
+  display:block;
+  background:#edf8f1;
+  border:1px solid #a8d5b9;
+  color:#17653a;
+}
+.import-message.error{
+  display:block;
+  background:#fff1f1;
+  border:1px solid #e4aaaa;
+  color:#9b2323;
+}
+.import-message.info{
+  display:block;
+  background:#eef4ff;
+  border:1px solid #b8c9ef;
+  color:#294c8f;
+}
+
+
+/* Display settings: controls on the left, preview on the right */
+.display-settings-layout{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 360px !important;
+  gap:20px !important;
+  align-items:start !important;
+}
+.display-setting-groups{
+  min-width:0;
+}
+.settings-preview{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  position:sticky !important;
+  top:16px !important;
+  width:360px !important;
+  max-width:360px !important;
+  margin:0 !important;
+  align-self:start !important;
+}
+.preview-half{
+  position:relative;
+  height:180px !important;
+  overflow:hidden !important;
+  padding:0 !important;
+}
+.preview-inner{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform-origin:center center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  width:calc(100% - 16px);
+  line-height:1.35;
+}
+@media (max-width:900px){
+  .display-settings-layout{
+    grid-template-columns:minmax(0,1fr) 300px !important;
+  }
+  .settings-preview{
+    width:300px !important;
+    max-width:300px !important;
+  }
+}
+@media (max-width:700px){
+  .display-settings-layout{
+    grid-template-columns:1fr !important;
+  }
+  .settings-preview{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    position:static !important;
+    width:100% !important;
+    max-width:none !important;
+  }
+}
+
+
+/* Refine display-settings proportions */
+.display-settings-layout{
+  display:grid !important;
+  grid-template-columns:minmax(320px,0.55fr) minmax(460px,1fr) !important;
+  gap:18px !important;
+  align-items:start !important;
+}
+.display-setting-groups{
+  max-width:520px;
+}
+.settings-preview{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:460px !important;
+  position:sticky !important;
+  top:16px !important;
+}
+.preview-half{
+  height:260px !important;
+  padding:0 !important;
+  position:relative;
+  overflow:hidden !important;
+}
+.preview-inner{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  transform-origin:center center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  width:calc(100% - 16px);
+  line-height:1.35;
+}
+.preview-overflow-warning{
+  display:none;
+  margin-top:8px;
+  padding:8px 10px;
+  border-radius:8px;
+  background:#fff1f1;
+  border:1px solid #e4aaaa;
+  color:#9b2323;
+  font-size:13px;
+  font-weight:700;
+}
+.preview-overflow-warning.show{display:block}
+@media (max-width:980px){
+  .display-settings-layout{
+    grid-template-columns:minmax(280px,0.5fr) minmax(380px,1fr) !important;
+  }
+  .settings-preview{min-width:380px !important}
+}
+@media (max-width:760px){
+  .display-settings-layout{grid-template-columns:1fr !important}
+  .display-setting-groups{max-width:none}
+  .settings-preview{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    min-width:0 !important;
+    position:static !important;
+  }
+}
+
+
+/* v29: narrower right-side preview */
+.display-settings-layout{
+  grid-template-columns:minmax(300px,0.62fr) minmax(320px,0.78fr) !important;
+}
+.display-setting-groups{
+  max-width:500px !important;
+}
+.settings-preview{
+  min-width:320px !important;
+  max-width:430px !important;
+  width:100% !important;
+  justify-self:end !important;
+}
+@media (max-width:860px){
+  .display-settings-layout{
+    grid-template-columns:minmax(270px,0.6fr) minmax(300px,0.75fr) !important;
+  }
+  .settings-preview{
+    min-width:300px !important;
+    max-width:380px !important;
+  }
+}
+@media (max-width:680px){
+  .display-settings-layout{grid-template-columns:1fr !important}
+  .settings-preview{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+    justify-self:stretch !important;
+  }
+}
+
+
+/* v30: definitive settings layout */
+.display-settings-layout{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:flex-start !important;
+  gap:18px !important;
+  width:100% !important;
+}
+.display-setting-groups{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  max-width:480px !important;
+}
+.settings-preview{
+  flex:0 0 360px !important;
+  width:360px !important;
+  min-width:360px !important;
+  max-width:360px !important;
+  margin:0 0 0 auto !important;
+  position:sticky !important;
+  top:16px !important;
+  align-self:flex-start !important;
+}
+@media (max-width:820px){
+  .display-settings-layout{
+    flex-direction:column !important;
+  }
+  .display-setting-groups{
+    max-width:none !important;
+    width:100% !important;
+  }
+  .settings-preview{
+    flex:0 0 auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    margin:0 !important;
+    position:static !important;
+  }
+}
+
+
+/* v31: landscape 16:9 preview */
+.settings-preview{
+  flex:0 0 480px !important;
+  width:480px !important;
+  min-width:480px !important;
+  max-width:480px !important;
+}
+.settings-preview-frame{
+  width:100%;
+  aspect-ratio:16 / 9;
+  display:grid;
+  grid-template-rows:1fr 1fr;
+  overflow:hidden;
+  border-radius:10px;
+}
+.settings-preview-frame .preview-half{
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  border-radius:0 !important;
+}
+@media (max-width:980px){
+  .settings-preview{
+    flex-basis:400px !important;
+    width:400px !important;
+    min-width:400px !important;
+    max-width:400px !important;
+  }
+}
+@media (max-width:820px){
+  .settings-preview{
+    width:min(100%,480px) !important;
+    min-width:0 !important;
+    max-width:480px !important;
+  }
+}
+
+
+#feedback .feedback-answer ruby rt{
+  font-size:.55em;
+  font-weight:500;
+}
+#feedback .feedback-answer ruby{
+  ruby-position:over;
+}
+
+
+.copyright-footer{
+  margin:24px auto 12px;
+  padding:8px 16px;
+  text-align:center;
+  font-size:12px;
+  color:#6b7280;
+  line-height:1.5;
+}
+body.fullscreen-teacher .copyright-footer{
+  display:none;
+}
+
+</style>
+</head>
+<body>
+<button id="fullscreenExitBtn" class="fullscreen-exit">全画面を終了</button>
+<div id="fullscreenOverlay" aria-hidden="true">
+  <div id="fullscreenQuestion"></div>
+  <div id="fullscreenAnswer"></div>
+  <div id="fullscreenThird" aria-hidden="true"></div>
+</div>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">日本語フラッシュカード / Japanese Flashcards <span class="version-badge">v1.19</span></div>
+    <div class="mode-switch">
+      <button id="teacherBtn" class="active">教師モード</button>
+      <button id="learnerBtn">Learner Mode</button>
+    </div>
+  </div>
+
+  <div class="panel" id="teacherControls">
+    <div class="controls">
+      <div class="field">
+        <label>問題</label>
+        <select id="fromForm"></select>
+      </div>
+      <div class="field">
+        <label>答え</label>
+        <select id="toForm"></select>
+      </div>
+      <div class="field">
+        <label>表記</label>
+        <select id="scriptMode">
+          <option value="kana">かな</option>
+          <option value="kanji">漢字</option>
+          <option value="ruby" selected>漢字＋ルビ</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>出題順</label>
+        <select id="orderMode">
+          <option value="ordered">登録順</option>
+          <option value="shuffle">シャッフル</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="group-row" style="margin-top:12px">
+      <strong>グループ：</strong>
+      <label><input type="checkbox" class="grp" value="1" checked> Ⅰ</label>
+      <label><input type="checkbox" class="grp" value="2" checked> Ⅱ</label>
+      <label><input type="checkbox" class="grp" value="3" checked> Ⅲ</label>
+      <button id="restartBtn">条件を反映して最初から</button>
+      <span id="setStatus" class="status-pill">内蔵プリセット 62項目</span>
+    </div>
+
+    <div class="settings-menu-box">
+    <details class="settings-details menu-details">
+      <summary>
+        <div class="settings-summary-row">
+          <span class="settings-summary-title menu-title">表示設定</span>
+          <span class="settings-summary-actions">
+            <button type="button" id="saveSettingsBtn">表示設定を保存</button>
+            <button type="button" id="resetSettingsBtn">初期設定に戻す</button>
+          </span>
+        </div>
+      </summary>
+
+      <div class="display-settings-layout">
+        <div class="display-setting-groups">
+<div class="font-manager">
+            <div style="font-weight:800;margin-bottom:8px">共通フォント設定</div>
+            <div class="font-actions">
+              <button id="loadLocalFontsBtn" type="button">PCのフォントを読み込む</button>
+            </div>
+            <div class="small" style="margin-top:7px">読み込み後は、すぐ下の問題・答えのフォントメニューにPC内フォントが追加されます。</div>
+            <div class="field" style="margin-top:10px">
+              <label>フォントを検索</label>
+              <input id="fontSearch" type="search" placeholder="例：UD、教科書、明朝">
+            </div>
+            <div id="fontGrid" class="font-grid hidden"></div>
+            <div id="fontPreview" class="font-preview">あいうえお　漢字　ABC 123　中文　한국어　العربية<small>選択中フォントのプレビュー</small></div>
+            <div id="fontStatus" class="font-status">標準は「游ゴシック」です。PC内フォントを読み込むと、問題・答えの通常メニューに追加されます。選択中の書体は各メニュー直下の「見本」で確認できます。</div>
+          </div>
+
+          <div class="half-setting" id="sourceSettingsPanel">
+            <h4>上半分：問題</h4>
+            <div class="field">
+              <label>フォント</label>
+              <select id="sourceFontFamily">
+            <option value="Yu Gothic" selected>游ゴシック</option>
+            <option value="Meiryo">メイリオ</option>
+            <option value="HGP教科書体">HGP教科書体</option>
+            <option value="Yu Mincho">游明朝</option>
+            <option value="MS PGothic">ＭＳ Ｐゴシック</option>
+            <option value="MS PMincho">ＭＳ Ｐ明朝</option>
+          </select>
+              <div class="inline-font-preview">
+                <span class="preview-label">見本</span>
+                <span id="sourceInlineFontPreview" class="preview-text">あいうえお　漢字　ABC 123</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>文字の太さ</label>
+              <select id="sourceFontWeight">
+                <option value="300">細字</option>
+                <option value="400" selected>標準</option>
+                <option value="500">中太</option>
+                <option value="700">太字</option>
+              </select>
+              <div id="sourceWeightHint" class="small"></div>
+            </div>
+            <div class="field">
+              <label>文字サイズ：<span id="sourceFontSizeValue">150 px</span></label>
+              <input id="sourceFontSize" type="range" min="32" max="500" step="2" value="150">
+            </div>
+            <div class="field"><label>文字色</label><input id="sourceTextColor" type="color" value="#111827"></div>
+            <div class="field"><label>背景色</label><input id="sourceBgColor" type="color" value="#ffffff"></div>
+            <div class="field">
+              <label>改行</label>
+              <select id="sourceWrapMode">
+                <option value="auto" selected>自動（長いとき折り返す）</option>
+                <option value="shrink">改行しない（はみ出すと自動縮小）</option>
+                <option value="manual">任意（\n の位置だけ）</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="half-setting" id="targetSettingsPanel">
+            <h4>下半分：答え</h4>
+            <div class="field">
+              <label>フォント</label>
+              <select id="targetFontFamily">
+            <option value="Yu Gothic" selected>游ゴシック</option>
+            <option value="Meiryo">メイリオ</option>
+            <option value="HGP教科書体">HGP教科書体</option>
+            <option value="Yu Mincho">游明朝</option>
+            <option value="MS PGothic">ＭＳ Ｐゴシック</option>
+            <option value="MS PMincho">ＭＳ Ｐ明朝</option>
+          </select>
+              <div class="inline-font-preview">
+                <span class="preview-label">見本</span>
+                <span id="targetInlineFontPreview" class="preview-text">あいうえお　漢字　ABC 123</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>文字の太さ</label>
+              <select id="targetFontWeight">
+                <option value="300">細字</option>
+                <option value="400" selected>標準</option>
+                <option value="500">中太</option>
+                <option value="700">太字</option>
+              </select>
+              <div id="targetWeightHint" class="small"></div>
+            </div>
+            <div class="field">
+              <label>文字サイズ：<span id="targetFontSizeValue">150 px</span></label>
+              <input id="targetFontSize" type="range" min="32" max="500" step="2" value="150">
+            </div>
+            <div class="field"><label>文字色</label><input id="targetTextColor" type="color" value="#2f5ee5"></div>
+            <div class="field"><label>背景色</label><input id="targetBgColor" type="color" value="#f2f2f2"></div>
+            <div class="field">
+              <label>改行</label>
+              <select id="targetWrapMode">
+                <option value="auto" selected>自動（長いとき折り返す）</option>
+                <option value="shrink">改行しない（はみ出すと自動縮小）</option>
+                <option value="manual">任意（\n の位置だけ）</option>
+              </select>
+            </div>
+          </div>
+
+          
+        </div>
+
+        <aside class="settings-preview">
+          <div class="settings-preview-title">プレビュー</div>
+          <div class="settings-preview-frame">
+            <div id="previewUpper" class="preview-half"><div id="previewUpperInner" class="preview-inner">問題</div></div>
+            <div id="previewLower" class="preview-half"><div id="previewLowerInner" class="preview-inner">答え</div></div>
+          </div>
+          <div class="preview-click-hint">上半分／下半分をクリックすると、対応する設定へ移動します。</div>
+          <div id="previewOverflowWarning" class="preview-overflow-warning">注意：この文字サイズでは、実際の表示で文字が枠からはみ出す可能性があります。</div>
+        </aside>
+      </div>
+    </details>
+    <details class="menu-details" >
+      <summary><span class="menu-title">カードセットを読み込む／保存する</span></summary>
+      <div id="importMessage" class="import-message" role="status" aria-live="polite"></div>
+
+      <div class="dataset-box">
+        <div class="dataset-box-title">データセット</div>
+        <div class="small">現在のカードデータと列情報をまとめて保存できます。別のPCや学生用にも、そのまま読み込めます。</div>
+        <div class="dataset-actions">
+          <button id="saveDatasetBtn" type="button">データセットを保存（JSON）</button>
+          <button id="loadDatasetBtn" type="button">データセットを読み込む（JSON）</button>
+          <input id="datasetFileInput" type="file" accept=".json,application/json" class="hidden">
+        </div>
+      </div>
+
+      <div class="import-grid">
+        <div>
+          <div class="field">
+            <label>CSV / TSV / TXT ファイル</label>
+            <input id="fileInput" type="file" accept=".csv,.tsv,.txt,text/plain,text/csv">
+          </div>
+          <div class="small" style="margin-top:10px">
+            <strong>自作セットは、基本的に「問題」と「答え」の2列だけで使えます。列を増やすと、どの列を問題・答えにするか自由に選べます。</strong><br>
+            項目の区切りには半角カンマ <code>,</code> を使います。カンマ前後の半角スペースはあってもかまいません。半角カンマ <code>,</code>、全角カンマ <code>，</code>、読点 <code>、</code> のどれでも使えます。<br><br>
+
+            <div style="margin:8px 0"><strong>1行目のタイトルは自由です。</strong> Learner Modeでは、既知の名称（例：ひらがな、カタカナ、ます形など）には英語を自動で補います。</div>
+            <div style="margin:8px 0"><strong>任意の位置で改行したいとき：</strong>セルの中に <code>\n</code> を入れてください（例：日本語を<code>\n</code>勉強します）。「改行：任意」を選ぶと、その位置だけで改行します。</div>
+            <strong>例1：ひらがなのみ</strong>
+            <pre style="white-space:pre-wrap;background:#f6f7fa;padding:10px;border-radius:8px">ます形,て形
+かきます,かいて
+よみます,よんで
+たべます,たべて</pre>
+
+            <strong>例2：漢字＋ルビ</strong>
+            <pre style="white-space:pre-wrap;background:#f6f7fa;padding:10px;border-radius:8px">ます形,て形
+書[か]きます,書[か]いて
+読[よ]みます,読[よ]んで
+食[た]べます,食[た]べて</pre>
+
+            <strong>例3：漢字＋ルビ＋動詞グループ</strong>
+            <pre style="white-space:pre-wrap;background:#f6f7fa;padding:10px;border-radius:8px">group,ます形,て形
+1,書[か]きます,書[か]いて
+1,読[よ]みます,読[よ]んで
+2,食[た]べます,食[た]べて
+3,来[き]ます,来[き]て</pre>
+
+            <strong>group は省略できます。</strong> グループ別に練習したい場合だけ 1・2・3 を指定してください。<br>
+            読点「、」も区切りとしてそのまま読み込めます。
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label>直接入力／コピペ</label>
+            <textarea id="pasteArea" rows="7" placeholder="CSV または TSV を貼り付け"></textarea>
+          </div>
+          <div class="nav" style="justify-content:flex-start">
+            <button id="loadPasteBtn">この内容を読み込む</button>
+            <button id="restorePresetBtn">内蔵プリセットに戻す</button>
+            <button id="downloadSetBtn">現在のセットをCSV保存</button>
+          </div>
+        </div>
+      </div>
+    </details>
+    </div>
+
+    
+  </div>
+
+  <div class="panel hidden" id="learnerControls">
+    <div class="learner-heading">Practice Settings</div>
+    <div class="controls">
+      <div class="field">
+        <label>Question</label>
+        <select id="learnerFrom"></select>
+      </div>
+      <div class="field">
+        <label>Answer</label>
+        <select id="learnerTo"></select>
+      </div>
+      <div class="field">
+        <label>Display</label>
+        <select id="learnerScript">
+          <option value="kana">Kana</option>
+          <option value="kanji">Kanji</option>
+          <option value="ruby" selected>Kanji + Furigana</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Order</label>
+        <select id="learnerOrder">
+          <option value="shuffle" selected>Shuffle</option>
+          <option value="ordered">Original order</option>
+        </select>
+      </div>
+    </div>
+    <div class="group-row" style="margin-top:12px">
+      <strong>Groups:</strong>
+      <label><input type="checkbox" class="lgrp" value="1" checked> I</label>
+      <label><input type="checkbox" class="lgrp" value="2" checked> II</label>
+      <label><input type="checkbox" class="lgrp" value="3" checked> III</label>
+      <button id="learnerStartBtn" class="primary">Start Practice</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="teacher-stage">
+      <div class="teacher-toolbar">
+        <button id="fullscreenBtn" title="全画面表示">全画面表示</button>
+      </div>
+      <div id="teacherDisplay">
+        <div class="card-wrap">
+          <div id="questionCard" class="card">読み込み中…</div>
+        </div>
+        <div class="card-wrap">
+          <div id="answerCard" class="card" style="visibility:hidden"></div>
+        </div>
+        <div id="thirdCardWrap" class="card-wrap hidden" aria-hidden="true">
+          <div id="thirdCard" class="card"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="learnerDisplay" class="hidden">
+      <div class="card-wrap">
+        <div id="card" class="card">読み込み中…</div>
+      </div>
+    </div>
+
+    <div id="teacherNav">
+      <div class="nav">
+        <button id="prevBtn">← 前へ</button>
+        <button id="nextBtn" class="primary">次へ →</button>
+        <span aria-hidden="true"></span>
+      </div>
+      <div id="teacherProgress" class="progress"></div>
+    </div>
+
+    <div id="learnerArea" class="answer-area hidden">
+      <div id="learnerPrompt" class="small" style="font-size:14px;margin-bottom:8px">Type the target form.</div>
+      <div class="answer-row">
+        <input id="answerInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer">
+        <button id="checkBtn" class="primary">Check</button>
+      </div>
+      <div id="feedback" class="feedback">Enter your answer and press Check.</div>
+      <div class="nav">
+        <button id="showAnswerBtn">Show Answer</button>
+        <button id="learnerNextBtn">Next</button>
+      </div>
+      <div id="learnerProgress" class="progress"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const forms = [
+  ["masu","ます形","ます形"],
+  ["te","て形","て形"],
+  ["dictionary","辞書形","辞書形"],
+  ["nai","ない形","ない形"],
+  ["ta","た形","た形"],
+  ["volitional","意向形","意向形"],
+  ["potential","可能形","可能形"],
+  ["passive","受け身形","受け身形"],
+  ["conditional","条件形","条件形"]
+];
+
+const preset = [{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["かきます","書きます","書|か|きます"],"te":["かいて","書いて","書|か|いて"],"dictionary":["かく","書く","書|か|く"],"nai":["かかない","書かない","書|か|かない"],"ta":["かいた","書いた","書|か|いた"],"volitional":["かこう","書こう","書|か|こう"],"potential":["かける","書ける","書|か|ける"],"passive":["かかれる","書かれる","書|か|かれる"],"conditional":["かけば","書けば","書|か|けば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["ききます","聞きます","聞|き|きます"],"te":["きいて","聞いて","聞|き|いて"],"dictionary":["きく","聞く","聞|き|く"],"nai":["きかない","聞かない","聞|き|かない"],"ta":["きいた","聞いた","聞|き|いた"],"volitional":["きこう","聞こう","聞|き|こう"],"potential":["きける","聞ける","聞|き|ける"],"passive":["きかれる","聞かれる","聞|き|かれる"],"conditional":["きけば","聞けば","聞|き|けば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["はたらきます","働きます","働|はたら|きます"],"te":["はたらいて","働いて","働|はたら|いて"],"dictionary":["はたらく","働く","働|はたら|く"],"nai":["はたらかない","働かない","働|はたら|かない"],"ta":["はたらいた","働いた","働|はたら|いた"],"volitional":["はたらこう","働こう","働|はたら|こう"],"potential":["はたらける","働ける","働|はたら|ける"],"passive":["はたらかれる","働かれる","働|はたら|かれる"],"conditional":["はたらけば","働けば","働|はたら|けば"]}},{"g":1,"label":{"kana":"（かばんを）","kanji":"（かばんを）"},"forms":{"masu":["おきます","置きます","置|お|きます"],"te":["おいて","置いて","置|お|いて"],"dictionary":["おく","置く","置|お|く"],"nai":["おかない","置かない","置|お|かない"],"ta":["おいた","置いた","置|お|いた"],"volitional":["おこう","置こう","置|お|こう"],"potential":["おける","置ける","置|お|ける"],"passive":["おかれる","置かれる","置|お|かれる"],"conditional":["おけば","置けば","置|お|けば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["いきます","行きます","行|い|きます"],"te":["いって","行って","行|い|って"],"dictionary":["いく","行く","行|い|く"],"nai":["いかない","行かない","行|い|かない"],"ta":["いった","行った","行|い|った"],"volitional":["いこう","行こう","行|い|こう"],"potential":["いける","行ける","行|い|ける"],"passive":["いかれる","行かれる","行|い|かれる"],"conditional":["いけば","行けば","行|い|けば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["およぎます","泳ぎます","泳|およ|ぎます"],"te":["およいで","泳いで","泳|およ|いで"],"dictionary":["およぐ","泳ぐ","泳|およ|ぐ"],"nai":["およがない","泳がない","泳|およ|がない"],"ta":["およいだ","泳いだ","泳|およ|いだ"],"volitional":["およごう","泳ごう","泳|およ|ごう"],"potential":["およげる","泳げる","泳|およ|げる"],"passive":["およがれる","泳がれる","泳|およ|がれる"],"conditional":["およげば","泳げば","泳|およ|げば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["いそぎます","急ぎます","急|いそ|ぎます"],"te":["いそいで","急いで","急|いそ|いで"],"dictionary":["いそぐ","急ぐ","急|いそ|ぐ"],"nai":["いそがない","急がない","急|いそ|がない"],"ta":["いそいだ","急いだ","急|いそ|いだ"],"volitional":["いそごう","急ごう","急|いそ|ごう"],"potential":["いそげる","急げる","急|いそ|げる"],"passive":["いそがれる","急がれる","急|いそ|がれる"],"conditional":["いそげば","急げば","急|いそ|げば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["のみます","飲みます","飲|の|みます"],"te":["のんで","飲んで","飲|の|んで"],"dictionary":["のむ","飲む","飲|の|む"],"nai":["のまない","飲まない","飲|の|まない"],"ta":["のんだ","飲んだ","飲|の|んだ"],"volitional":["のもう","飲もう","飲|の|もう"],"potential":["のめる","飲める","飲|の|める"],"passive":["のまれる","飲まれる","飲|の|まれる"],"conditional":["のめば","飲めば","飲|の|めば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["よみます","読みます","読|よ|みます"],"te":["よんで","読んで","読|よ|んで"],"dictionary":["よむ","読む","読|よ|む"],"nai":["よまない","読まない","読|よ|まない"],"ta":["よんだ","読んだ","読|よ|んだ"],"volitional":["よもう","読もう","読|よ|もう"],"potential":["よめる","読める","読|よ|める"],"passive":["よまれる","読まれる","読|よ|まれる"],"conditional":["よめば","読めば","読|よ|めば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["やすみます","休みます","休|やす|みます"],"te":["やすんで","休んで","休|やす|んで"],"dictionary":["やすむ","休む","休|やす|む"],"nai":["やすまない","休まない","休|やす|まない"],"ta":["やすんだ","休んだ","休|やす|んだ"],"volitional":["やすもう","休もう","休|やす|もう"],"potential":["やすめる","休める","休|やす|める"],"passive":["やすまれる","休まれる","休|やす|まれる"],"conditional":["やすめば","休めば","休|やす|めば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["あそびます","遊びます","遊|あそ|びます"],"te":["あそんで","遊んで","遊|あそ|んで"],"dictionary":["あそぶ","遊ぶ","遊|あそ|ぶ"],"nai":["あそばない","遊ばない","遊|あそ|ばない"],"ta":["あそんだ","遊んだ","遊|あそ|んだ"],"volitional":["あそぼう","遊ぼう","遊|あそ|ぼう"],"potential":["あそべる","遊べる","遊|あそ|べる"],"passive":["あそばれる","遊ばれる","遊|あそ|ばれる"],"conditional":["あそべば","遊べば","遊|あそ|べば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["よびます","呼びます","呼|よ|びます"],"te":["よんで","呼んで","呼|よ|んで"],"dictionary":["よぶ","呼ぶ","呼|よ|ぶ"],"nai":["よばない","呼ばない","呼|よ|ばない"],"ta":["よんだ","呼んだ","呼|よ|んだ"],"volitional":["よぼう","呼ぼう","呼|よ|ぼう"],"potential":["よべる","呼べる","呼|よ|べる"],"passive":["よばれる","呼ばれる","呼|よ|ばれる"],"conditional":["よべば","呼べば","呼|よ|べば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["とります","取ります","取|と|ります"],"te":["とって","取って","取|と|って"],"dictionary":["とる","取る","取|と|る"],"nai":["とらない","取らない","取|と|らない"],"ta":["とった","取った","取|と|った"],"volitional":["とろう","取ろう","取|と|ろう"],"potential":["とれる","取れる","取|と|れる"],"passive":["とられる","取られる","取|と|られる"],"conditional":["とれば","取れば","取|と|れば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["きります","切ります","切|き|ります"],"te":["きって","切って","切|き|って"],"dictionary":["きる","切る","切|き|る"],"nai":["きらない","切らない","切|き|らない"],"ta":["きった","切った","切|き|った"],"volitional":["きろう","切ろう","切|き|ろう"],"potential":["きれる","切れる","切|き|れる"],"passive":["きられる","切られる","切|き|られる"],"conditional":["きれば","切れば","切|き|れば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["かえります","帰ります","帰|かえ|ります"],"te":["かえって","帰って","帰|かえ|って"],"dictionary":["かえる","帰る","帰|かえ|る"],"nai":["かえらない","帰らない","帰|かえ|らない"],"ta":["かえった","帰った","帰|かえ|った"],"volitional":["かえろう","帰ろう","帰|かえ|ろう"],"potential":["かえれる","帰れる","帰|かえ|れる"],"passive":["かえられる","帰られる","帰|かえ|られる"],"conditional":["かえれば","帰れば","帰|かえ|れば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["おわります","終わります","終|お|わります"],"te":["おわって","終わって","終|お|わって"],"dictionary":["おわる","終わる","終|お|わる"],"nai":["おわらない","終わらない","終|お|わらない"],"ta":["おわった","終わった","終|お|わった"],"volitional":["おわろう","終わろう","終|お|わろう"],"potential":["おわれる","終われる","終|お|われる"],"passive":["おわられる","終わられる","終|お|わられる"],"conditional":["おわれば","終われば","終|お|われば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["おくります","送ります","送|おく|ります"],"te":["おくって","送って","送|おく|って"],"dictionary":["おくる","送る","送|おく|る"],"nai":["おくらない","送らない","送|おく|らない"],"ta":["おくった","送った","送|おく|った"],"volitional":["おくろう","送ろう","送|おく|ろう"],"potential":["おくれる","送れる","送|おく|れる"],"passive":["おくられる","送られる","送|おく|られる"],"conditional":["おくれば","送れば","送|おく|れば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["わかります","わかります","わかります"],"te":["わかって","わかって","わかって"],"dictionary":["わかる","わかる","わかる"],"nai":["わからない","わからない","わからない"],"ta":["わかった","わかった","わかった"],"volitional":["わかろう","わかろう","わかろう"],"potential":["わかれる","わかれる","わかれる"],"passive":["わかられる","わかられる","わかられる"],"conditional":["わかれば","わかれば","わかれば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["かかります","かかります","かかります"],"te":["かかって","かかって","かかって"],"dictionary":["かかる","かかる","かかる"],"nai":["かからない","かからない","かからない"],"ta":["かかった","かかった","かかった"],"volitional":["かかろう","かかろう","かかろう"],"potential":["かかれる","かかれる","かかれる"],"passive":["かかられる","かかられる","かかられる"],"conditional":["かかれば","かかれば","かかれば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["はいります","入ります","入|はい|ります"],"te":["はいって","入って","入|はい|って"],"dictionary":["はいる","入る","入|はい|る"],"nai":["はいらない","入らない","入|はい|らない"],"ta":["はいった","入った","入|はい|った"],"volitional":["はいろう","入ろう","入|はい|ろう"],"potential":["はいれる","入れる","入|はい|れる"],"passive":["はいられる","入られる","入|はい|られる"],"conditional":["はいれば","入れば","入|はい|れば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["まちます","待ちます","待|ま|ちます"],"te":["まって","待って","待|ま|って"],"dictionary":["まつ","待つ","待|ま|つ"],"nai":["またない","待たない","待|ま|たない"],"ta":["まった","待った","待|ま|った"],"volitional":["まとう","待とう","待|ま|とう"],"potential":["まてる","待てる","待|ま|てる"],"passive":["またれる","待たれる","待|ま|たれる"],"conditional":["まてば","待てば","待|ま|てば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["もちます","持ちます","持|も|ちます"],"te":["もって","持って","持|も|って"],"dictionary":["もつ","持つ","持|も|つ"],"nai":["もたない","持たない","持|も|たない"],"ta":["もった","持った","持|も|った"],"volitional":["もとう","持とう","持|も|とう"],"potential":["もてる","持てる","持|も|てる"],"passive":["もたれる","持たれる","持|も|たれる"],"conditional":["もてば","持てば","持|も|てば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["かいます","買います","買|か|います"],"te":["かって","買って","買|か|って"],"dictionary":["かう","買う","買|か|う"],"nai":["かわない","買わない","買|か|わない"],"ta":["かった","買った","買|か|った"],"volitional":["かおう","買おう","買|か|おう"],"potential":["かえる","買える","買|か|える"],"passive":["かわれる","買われる","買|か|われる"],"conditional":["かえば","買えば","買|か|えば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["すいます","吸います","吸|す|います"],"te":["すって","吸って","吸|す|って"],"dictionary":["すう","吸う","吸|す|う"],"nai":["すわない","吸わない","吸|す|わない"],"ta":["すった","吸った","吸|す|った"],"volitional":["すおう","吸おう","吸|す|おう"],"potential":["すえる","吸える","吸|す|える"],"passive":["すわれる","吸われる","吸|す|われる"],"conditional":["すえば","吸えば","吸|す|えば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["あいます","会います","会|あ|います"],"te":["あって","会って","会|あ|って"],"dictionary":["あう","会う","会|あ|う"],"nai":["あわない","会わない","会|あ|わない"],"ta":["あった","会った","会|あ|った"],"volitional":["あおう","会おう","会|あ|おう"],"potential":["あえる","会える","会|あ|える"],"passive":["あわれる","会われる","会|あ|われる"],"conditional":["あえば","会えば","会|あ|えば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["ならいます","習います","習|なら|います"],"te":["ならって","習って","習|なら|って"],"dictionary":["ならう","習う","習|なら|う"],"nai":["ならわない","習わない","習|なら|わない"],"ta":["ならった","習った","習|なら|った"],"volitional":["ならおう","習おう","習|なら|おう"],"potential":["ならえる","習える","習|なら|える"],"passive":["ならわれる","習われる","習|なら|われる"],"conditional":["ならえば","習えば","習|なら|えば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["もらいます","もらいます","もらいます"],"te":["もらって","もらって","もらって"],"dictionary":["もらう","もらう","もらう"],"nai":["もらわない","もらわない","もらわない"],"ta":["もらった","もらった","もらった"],"volitional":["もらおう","もらおう","もらおう"],"potential":["もらえる","もらえる","もらえる"],"passive":["もらわれる","もらわれる","もらわれる"],"conditional":["もらえば","もらえば","もらえば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["かします","貸します","貸|か|します"],"te":["かして","貸して","貸|か|して"],"dictionary":["かす","貸す","貸|か|す"],"nai":["かさない","貸さない","貸|か|さない"],"ta":["かした","貸した","貸|か|した"],"volitional":["かそう","貸そう","貸|か|そう"],"potential":["かせる","貸せる","貸|か|せる"],"passive":["かされる","貸される","貸|か|される"],"conditional":["かせば","貸せば","貸|か|せば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["だします","出します","出|だ|します"],"te":["だして","出して","出|だ|して"],"dictionary":["だす","出す","出|だ|す"],"nai":["ださない","出さない","出|だ|さない"],"ta":["だした","出した","出|だ|した"],"volitional":["だそう","出そう","出|だ|そう"],"potential":["だせる","出せる","出|だ|せる"],"passive":["だされる","出される","出|だ|される"],"conditional":["だせば","出せば","出|だ|せば"]}},{"g":1,"label":{"kana":"","kanji":""},"forms":{"masu":["はなします","話します","話|はな|します"],"te":["はなして","話して","話|はな|して"],"dictionary":["はなす","話す","話|はな|す"],"nai":["はなさない","話さない","話|はな|さない"],"ta":["はなした","話した","話|はな|した"],"volitional":["はなそう","話そう","話|はな|そう"],"potential":["はなせる","話せる","話|はな|せる"],"passive":["はなされる","話される","話|はな|される"],"conditional":["はなせば","話せば","話|はな|せば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["ねます","寝ます","寝|ね|ます"],"te":["ねて","寝て","寝|ね|て"],"dictionary":["ねる","寝る","寝|ね|る"],"nai":["ねない","寝ない","寝|ね|ない"],"ta":["ねた","寝た","寝|ね|た"],"volitional":["ねよう","寝よう","寝|ね|よう"],"potential":["ねられる","寝られる","寝|ね|られる"],"passive":["ねられる","寝られる","寝|ね|られる"],"conditional":["ねれば","寝れば","寝|ね|れば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["でます","出ます","出ます"],"te":["でて","出て","出て"],"dictionary":["でる","出る","出る"],"nai":["でない","出ない","出ない"],"ta":["でた","出た","出た"],"volitional":["でよう","出よう","出よう"],"potential":["でられる","出られる","出られる"],"passive":["でられる","出られる","出られる"],"conditional":["でれば","出れば","出れば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["たべます","食べます","食|た|べます"],"te":["たべて","食べて","食|た|べて"],"dictionary":["たべる","食べる","食|た|べる"],"nai":["たべない","食べない","食|た|べない"],"ta":["たべた","食べた","食|た|べた"],"volitional":["たべよう","食べよう","食|た|べよう"],"potential":["たべられる","食べられる","食|た|べられる"],"passive":["たべられる","食べられる","食|た|べられる"],"conditional":["たべれば","食べれば","食|た|べれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["あげます","あげます","あげます"],"te":["あげて","あげて","あげて"],"dictionary":["あげる","あげる","あげる"],"nai":["あげない","あげない","あげない"],"ta":["あげた","あげた","あげた"],"volitional":["あげよう","あげよう","あげよう"],"potential":["あげられる","あげられる","あげられる"],"passive":["あげられる","あげられる","あげられる"],"conditional":["あげれば","あげれば","あげれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["かけます","かけます","かけます"],"te":["かけて","かけて","かけて"],"dictionary":["かける","かける","かける"],"nai":["かけない","かけない","かけない"],"ta":["かけた","かけた","かけた"],"volitional":["かけよう","かけよう","かけよう"],"potential":["かけられる","かけられる","かけられる"],"passive":["かけられる","かけられる","かけられる"],"conditional":["かければ","かければ","かければ"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["つけます","付けます","付|つ|けます"],"te":["つけて","付けて","付|つ|けて"],"dictionary":["つける","付ける","付|つ|ける"],"nai":["つけない","付けない","付|つ|けない"],"ta":["つけた","付けた","付|つ|けた"],"volitional":["つけよう","付けよう","付|つ|けよう"],"potential":["つけられる","付けられる","付|つ|けられる"],"passive":["つけられる","付けられる","付|つ|けられる"],"conditional":["つければ","付ければ","付|つ|ければ"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["あけます","開けます","開|あ|けます"],"te":["あけて","開けて","開|あ|けて"],"dictionary":["あける","開ける","開|あ|ける"],"nai":["あけない","開けない","開|あ|けない"],"ta":["あけた","開けた","開|あ|けた"],"volitional":["あけよう","開けよう","開|あ|けよう"],"potential":["あけられる","開けられる","開|あ|けられる"],"passive":["あけられる","開けられる","開|あ|けられる"],"conditional":["あければ","開ければ","開|あ|ければ"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["みせます","見せます","見|み|せます"],"te":["みせて","見せて","見|み|せて"],"dictionary":["みせる","見せる","見|み|せる"],"nai":["みせない","見せない","見|み|せない"],"ta":["みせた","見せた","見|み|せた"],"volitional":["みせよう","見せよう","見|み|せよう"],"potential":["みせられる","見せられる","見|み|せられる"],"passive":["みせられる","見せられる","見|み|せられる"],"conditional":["みせれば","見せれば","見|み|せれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["おしえます","教えます","教|おし|えます"],"te":["おしえて","教えて","教|おし|えて"],"dictionary":["おしえる","教える","教|おし|える"],"nai":["おしえない","教えない","教|おし|えない"],"ta":["おしえた","教えた","教|おし|えた"],"volitional":["おしえよう","教えよう","教|おし|えよう"],"potential":["おしえられる","教えられる","教|おし|えられる"],"passive":["おしえられる","教えられる","教|おし|えられる"],"conditional":["おしえれば","教えれば","教|おし|えれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["むかえます","迎えます","迎|むか|えます"],"te":["むかえて","迎えて","迎|むか|えて"],"dictionary":["むかえる","迎える","迎|むか|える"],"nai":["むかえない","迎えない","迎|むか|えない"],"ta":["むかえた","迎えた","迎|むか|えた"],"volitional":["むかえよう","迎えよう","迎|むか|えよう"],"potential":["むかえられる","迎えられる","迎|むか|えられる"],"passive":["むかえられる","迎えられる","迎|むか|えられる"],"conditional":["むかえれば","迎えれば","迎|むか|えれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["つかれます","疲れます","疲|つか|れます"],"te":["つかれて","疲れて","疲|つか|れて"],"dictionary":["つかれる","疲れる","疲|つか|れる"],"nai":["つかれない","疲れない","疲|つか|れない"],"ta":["つかれた","疲れた","疲|つか|れた"],"volitional":["つかれよう","疲れよう","疲|つか|れよう"],"potential":["つかれられる","疲れられる","疲|つか|れられる"],"passive":["つかれられる","疲れられる","疲|つか|れられる"],"conditional":["つかれれば","疲れれば","疲|つか|れれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["しめます","閉めます","閉|し|めます"],"te":["しめて","閉めて","閉|し|めて"],"dictionary":["しめる","閉める","閉|し|める"],"nai":["しめない","閉めない","閉|し|めない"],"ta":["しめた","閉めた","閉|し|めた"],"volitional":["しめよう","閉めよう","閉|し|めよう"],"potential":["しめられる","閉められる","閉|し|められる"],"passive":["しめられる","閉められる","閉|し|められる"],"conditional":["しめれば","閉めれば","閉|し|めれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["とめます","止めます","止|と|めます"],"te":["とめて","止めて","止|と|めて"],"dictionary":["とめる","止める","止|と|める"],"nai":["とめない","止めない","止|と|めない"],"ta":["とめた","止めた","止|と|めた"],"volitional":["とめよう","止めよう","止|と|めよう"],"potential":["とめられる","止められる","止|と|められる"],"passive":["とめられる","止められる","止|と|められる"],"conditional":["とめれば","止めれば","止|と|めれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["はじめます","始めます","始|はじ|めます"],"te":["はじめて","始めて","始|はじ|めて"],"dictionary":["はじめる","始める","始|はじ|める"],"nai":["はじめない","始めない","始|はじ|めない"],"ta":["はじめた","始めた","始|はじ|めた"],"volitional":["はじめよう","始めよう","始|はじ|めよう"],"potential":["はじめられる","始められる","始|はじ|められる"],"passive":["はじめられる","始められる","始|はじ|められる"],"conditional":["はじめれば","始めれば","始|はじ|めれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["みます","見ます","見|み|ます"],"te":["みて","見て","見|み|て"],"dictionary":["みる","見る","見|み|る"],"nai":["みない","見ない","見|み|ない"],"ta":["みた","見た","見|み|た"],"volitional":["みよう","見よう","見|み|よう"],"potential":["みられる","見られる","見|み|られる"],"passive":["みられる","見られる","見|み|られる"],"conditional":["みれば","見れば","見|み|れば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["います","います","います"],"te":["いて","いて","いて"],"dictionary":["いる","いる","いる"],"nai":["いない","いない","いない"],"ta":["いた","いた","いた"],"volitional":["いよう","いよう","いよう"],"potential":["いられる","いられる","いられる"],"passive":["いられる","いられる","いられる"],"conditional":["いれば","いれば","いれば"]}},{"g":2,"label":{"kana":"（7じに）","kanji":"（7時に）"},"forms":{"masu":["おきます","起きます","起|お|きます"],"te":["おきて","起きて","起|お|きて"],"dictionary":["おきる","起きる","起|お|きる"],"nai":["おきない","起きない","起|お|きない"],"ta":["おきた","起きた","起|お|きた"],"volitional":["おきよう","起きよう","起|お|きよう"],"potential":["おきられる","起きられる","起|お|きられる"],"passive":["おきられる","起きられる","起|お|きられる"],"conditional":["おきれば","起きれば","起|お|きれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["かります","借ります","借|か|ります"],"te":["かりて","借りて","借|か|りて"],"dictionary":["かりる","借りる","借|か|りる"],"nai":["かりない","借りない","借|か|りない"],"ta":["かりた","借りた","借|か|りた"],"volitional":["かりよう","借りよう","借|か|りよう"],"potential":["かりられる","借りられる","借|か|りられる"],"passive":["かりられる","借りられる","借|か|りられる"],"conditional":["かりれば","借りれば","借|か|りれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["おります","降ります","降|お|ります"],"te":["おりて","降りて","降|お|りて"],"dictionary":["おりる","降りる","降|お|りる"],"nai":["おりない","降りない","降|お|りない"],"ta":["おりた","降りた","降|お|りた"],"volitional":["おりよう","降りよう","降|お|りよう"],"potential":["おりられる","降りられる","降|お|りられる"],"passive":["おりられる","降りられる","降|お|りられる"],"conditional":["おりれば","降りれば","降|お|りれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["あびます","浴びます","浴|あ|びます"],"te":["あびて","浴びて","浴|あ|びて"],"dictionary":["あびる","浴びる","浴|あ|びる"],"nai":["あびない","浴びない","浴|あ|びない"],"ta":["あびた","浴びた","浴|あ|びた"],"volitional":["あびよう","浴びよう","浴|あ|びよう"],"potential":["あびられる","浴びられる","浴|あ|びられる"],"passive":["あびられる","浴びられる","浴|あ|びられる"],"conditional":["あびれば","浴びれば","浴|あ|びれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["できます","できます","できます"],"te":["できて","できて","できて"],"dictionary":["できる","できる","できる"],"nai":["できない","できない","できない"],"ta":["できた","できた","できた"],"volitional":["できよう","できよう","できよう"],"potential":["できられる","できられる","できられる"],"passive":["できられる","できられる","できられる"],"conditional":["できれば","できれば","できれば"]}},{"g":2,"label":{"kana":"","kanji":""},"forms":{"masu":["たります","足ります","足|た|ります"],"te":["たりて","足りて","足|た|りて"],"dictionary":["たりる","足りる","足|た|りる"],"nai":["たりない","足りない","足|た|りない"],"ta":["たりた","足りた","足|た|りた"],"volitional":["たりよう","足りよう","足|た|りよう"],"potential":["たりられる","足りられる","足|た|りられる"],"passive":["たりられる","足りられる","足|た|りられる"],"conditional":["たりれば","足りれば","足|た|りれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["します","します","します"],"te":["して","して","して"],"dictionary":["する","する","する"],"nai":["しない","しない","しない"],"ta":["した","した","した"],"volitional":["しよう","しよう","しよう"],"potential":["できる","できる","できる"],"passive":["される","される","される"],"conditional":["すれば","すれば","すれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["べんきょうします","勉強します","勉強|べんきょう|します"],"te":["べんきょうして","勉強して","勉強|べんきょう|して"],"dictionary":["べんきょうする","勉強する","勉強|べんきょう|する"],"nai":["べんきょうしない","勉強しない","勉強|べんきょう|しない"],"ta":["べんきょうした","勉強した","勉強|べんきょう|した"],"volitional":["べんきょうしよう","勉強しよう","勉強|べんきょう|しよう"],"potential":["べんきょうできる","勉強できる","勉強|べんきょう|できる"],"passive":["べんきょうされる","勉強される","勉強|べんきょう|される"],"conditional":["べんきょうすれば","勉強すれば","勉強|べんきょう|すれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["けっこんします","結婚します","結婚|けっこん|します"],"te":["けっこんして","結婚して","結婚|けっこん|して"],"dictionary":["けっこんする","結婚する","結婚|けっこん|する"],"nai":["けっこんしない","結婚しない","結婚|けっこん|しない"],"ta":["けっこんした","結婚した","結婚|けっこん|した"],"volitional":["けっこんしよう","結婚しよう","結婚|けっこん|しよう"],"potential":["けっこんできる","結婚できる","結婚|けっこん|できる"],"passive":["けっこんされる","結婚される","結婚|けっこん|される"],"conditional":["けっこんすれば","結婚すれば","結婚|けっこん|すれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["かいものします","買い物します","買い物|かいもの|します"],"te":["かいものして","買い物して","買い物|かいもの|して"],"dictionary":["かいものする","買い物する","買い物|かいもの|する"],"nai":["かいものしない","買い物しない","買い物|かいもの|しない"],"ta":["かいものした","買い物した","買い物|かいもの|した"],"volitional":["かいものしよう","買い物しよう","買い物|かいもの|しよう"],"potential":["かいものできる","買い物できる","買い物|かいもの|できる"],"passive":["かいものされる","買い物される","買い物|かいもの|される"],"conditional":["かいものすれば","買い物すれば","買い物|かいもの|すれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["しょくじします","食事します","食事|しょくじ|します"],"te":["しょくじして","食事して","食事|しょくじ|して"],"dictionary":["しょくじする","食事する","食事|しょくじ|する"],"nai":["しょくじしない","食事しない","食事|しょくじ|しない"],"ta":["しょくじした","食事した","食事|しょくじ|した"],"volitional":["しょくじしよう","食事しよう","食事|しょくじ|しよう"],"potential":["しょくじできる","食事できる","食事|しょくじ|できる"],"passive":["しょくじされる","食事される","食事|しょくじ|される"],"conditional":["しょくじすれば","食事すれば","食事|しょくじ|すれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["さんぽします","散歩します","散歩|さんぽ|します"],"te":["さんぽして","散歩して","散歩|さんぽ|して"],"dictionary":["さんぽする","散歩する","散歩|さんぽ|する"],"nai":["さんぽしない","散歩しない","散歩|さんぽ|しない"],"ta":["さんぽした","散歩した","散歩|さんぽ|した"],"volitional":["さんぽしよう","散歩しよう","散歩|さんぽ|しよう"],"potential":["さんぽできる","散歩できる","散歩|さんぽ|できる"],"passive":["さんぽされる","散歩される","散歩|さんぽ|される"],"conditional":["さんぽすれば","散歩すれば","散歩|さんぽ|すれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["コピーします","コピーします","コピーします"],"te":["コピーして","コピーして","コピーして"],"dictionary":["コピーする","コピーする","コピーする"],"nai":["コピーしない","コピーしない","コピーしない"],"ta":["コピーした","コピーした","コピーした"],"volitional":["コピーしよう","コピーしよう","コピーしよう"],"potential":["コピーできる","コピーできる","コピーできる"],"passive":["コピーされる","コピーされる","コピーされる"],"conditional":["コピーすれば","コピーすれば","コピーすれば"]}},{"g":3,"label":{"kana":"（にほんへ）","kanji":"（日本へ）"},"forms":{"masu":["きます","来ます","来|き|ます"],"te":["きて","来て","来|き|て"],"dictionary":["くる","来る","来る"],"nai":["こない","来ない","来ない"],"ta":["きた","来た","来|き|た"],"volitional":["こよう","来よう","来よう"],"potential":["こられる","来られる","来られる"],"passive":["こられる","来られる","来られる"],"conditional":["くれば","来れば","来れば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["もってきます","持ってきます","持|も|ってきます"],"te":["もってきて","持ってきて","持|も|ってきて"],"dictionary":["もってくる","持ってくる","持|も|ってくる"],"nai":["もってこない","持ってこない","持|も|ってこない"],"ta":["もってきた","持ってきた","持|も|ってきた"],"volitional":["もってこよう","持ってこよう","持|も|ってこよう"],"potential":["もってこられる","持ってこられる","持|も|ってこられる"],"passive":["もってこられる","持ってこられる","持|も|ってこられる"],"conditional":["もってくれば","持ってくれば","持|も|ってくれば"]}},{"g":3,"label":{"kana":"","kanji":""},"forms":{"masu":["つれてきます","連れてきます","連|つ|れてきます"],"te":["つれてきて","連れてきて","連|つ|れてきて"],"dictionary":["つれてくる","連れてくる","連|つ|れてくる"],"nai":["つれてこない","連れてこない","連|つ|れてこない"],"ta":["つれてきた","連れてきた","連|つ|れてきた"],"volitional":["つれてこよう","連れてこよう","連|つ|れてこよう"],"potential":["つれてこられる","連れてこられる","連|つ|れてこられる"],"passive":["つれてこられる","連れてこられる","連|つ|れてこられる"],"conditional":["つれてくれば","連れてくれば","連|つ|れてくれば"]}}];
+
+let data = JSON.parse(JSON.stringify(preset));
+let mode = "teacher", deck=[], idx=0, flipped=false;
+let missed=[], roundDeck=[], roundIdx=0, answeredCurrent=false;
+
+const learnerFormLabels={
+  "masu":"ます形（Masu Form）",
+  "te":"て形（Te Form）",
+  "dictionary":"辞書形（Dictionary Form）",
+  "nai":"ない形（Nai Form）",
+  "ta":"た形（Ta Form）",
+  "volitional":"意向形（Volitional Form）",
+  "potential":"可能形（Potential Form）",
+  "passive":"受け身形（Passive Form）",
+  "conditional":"条件形（Conditional Form）"
+};
+
+const learnerHeaderLabels={
+  "ます形":"ます形（Masu Form）",
+  "て形":"て形（Te Form）",
+  "辞書形":"辞書形（Dictionary Form）",
+  "ない形":"ない形（Nai Form）",
+  "た形":"た形（Ta Form）",
+  "意向形":"意向形（Volitional Form）",
+  "可能形":"可能形（Potential Form）",
+  "受け身形":"受け身形（Passive Form）",
+  "条件形":"条件形（Conditional Form）",
+  "ひらがな":"ひらがな（Hiragana）",
+  "カタカナ":"カタカナ（Katakana）",
+  "ローマ字":"ローマ字（Romaji）",
+  "読み":"読み（Reading）",
+  "意味":"意味（Meaning）",
+  "漢字":"漢字（Kanji）"
+};
+const $=id=>document.getElementById(id);
+
+// v1.2 internal display model: three equal-capability panels are reserved.
+// The current public UI uses Panel 1 (question) + Panel 2 (answer); Panel 3 stays hidden.
+const INTERNAL_PANEL_CAPACITY=3;
+const panelModel=[
+  {key:"source",cardId:"questionCard",fullscreenId:"fullscreenQuestion",wrapId:"sourceWrapMode",directionId:null},
+  {key:"target",cardId:"answerCard",fullscreenId:"fullscreenAnswer",wrapId:"targetWrapMode",directionId:null},
+  {key:"third",cardId:"thirdCard",fullscreenId:"fullscreenThird",wrapId:null,directionId:null}
+];
+function setVisibleTeacherPanels(count=2){
+  const n=Math.max(2,Math.min(INTERNAL_PANEL_CAPACITY,count));
+  document.body.classList.toggle("panel3-enabled",n===3);
+  if($("teacherDisplay")) $("teacherDisplay").style.gridTemplateRows=`repeat(${n},1fr)`;
+  const thirdWrap=$("thirdCardWrap"), thirdFull=$("fullscreenThird");
+  if(thirdWrap) thirdWrap.classList.toggle("hidden",n!==3);
+  if(thirdFull) thirdFull.setAttribute("aria-hidden",n===3?"false":"true");
+  [$("fullscreenQuestion"),$("fullscreenAnswer"),thirdFull].filter(Boolean).forEach((el,i)=>{
+    if(i<n){el.style.flex=`0 0 ${100/n}%`;el.style.height=`${100/n}%`;}
+  });
+}
+
+let localFontRecords=[];
+let localFontGroups=new Map();
+let localFontAliasToGroup=new Map();
+let activatedLocalFaces=new Map();
+let activeFontTarget="source";
+
+function quoteFontFamily(name=""){
+  const n=String(name).trim();
+  return `"${n.replace(/\\/g,"\\\\").replace(/"/g,'\\"')}"`;
+}
+function selectedWeight(target="source"){
+  return $(target==="target"?"targetFontWeight":"sourceFontWeight")?.value || "400";
+}
+function isSymbolOrIconFontFamily(name=""){
+  const n=String(name).toLowerCase();
+  return /(wingdings|webdings|marlett|symbol|icons?\b|mdl2|fluent icons|material icons|fontawesome|font awesome|segmdl2|holomdl2)/i.test(n);
+}
+function isUdDigiFamily(name=""){
+  return /^UD Digi\b/i.test(String(name).trim());
+}
+function stripWeightSuffix(name=""){
+  let s=String(name).trim();
+  if(!s)return s;
+
+  // Separate-family fonts such as "Yu Gothic Light" / "Yu Gothic Medium"
+  // are treated as one logical family.
+  const wordSuffix=/(?:[\s_-]+)(Thin|Hairline|Extra[\s_-]?Light|Ultra[\s_-]?Light|Light|Regular|Normal|Book|Roman|Medium|Semi[\s_-]?Bold|Demi[\s_-]?Bold|Extra[\s_-]?Bold|Ultra[\s_-]?Bold|Bold|Black|Heavy)$/i;
+  let prev="";
+  while(s!==prev){
+    prev=s;
+    s=s.replace(wordSuffix,"").trim();
+  }
+
+  // UD Digi Kyokasho NK-R / NK-B style suffixes.
+  s=s.replace(/[-_](R|B|L|M)$/i,"").trim();
+  return s || String(name).trim();
+}
+function inferFontWeightSlot(record){
+  const s=[
+    record?.family||"",
+    record?.fullName||"",
+    record?.style||"",
+    record?.postscriptName||""
+  ].join(" ").toLowerCase();
+
+  if(/thin|hairline|extra[\s_-]?light|ultra[\s_-]?light|light/.test(s)) return "300";
+  if(/semi[\s_-]?bold|demi[\s_-]?bold|medium/.test(s)) return "500";
+  if(/extra[\s_-]?bold|ultra[\s_-]?bold|black|heavy|bold/.test(s)) return "700";
+  if(/regular|normal|book|roman/.test(s)) return "400";
+
+  if(/(?:^|[-_\s])b(?:$|[-_\s])/.test(s)) return "700";
+  if(/(?:^|[-_\s])l(?:$|[-_\s])/.test(s)) return "300";
+  if(/(?:^|[-_\s])m(?:$|[-_\s])/.test(s)) return "500";
+  if(/(?:^|[-_\s])r(?:$|[-_\s])/.test(s)) return "400";
+  return "400";
+}
+function logicalFamilyName(record){
+  const family=String(record?.family||record?.fullName||"").trim();
+  return stripWeightSuffix(family);
+}
+function recordPreferenceScore(record,slot,groupName){
+  const family=String(record?.family||"");
+  const full=String(record?.fullName||"");
+  const style=String(record?.style||"").toLowerCase();
+  let score=0;
+  if(family===groupName) score+=4;
+  if(slot==="400" && /regular|normal|book|roman/.test(style+" "+full.toLowerCase())) score+=3;
+  if(slot==="300" && /light|thin|hairline/.test((family+" "+full+" "+style).toLowerCase())) score+=3;
+  if(slot==="500" && /medium|semibold|demibold/.test((family+" "+full+" "+style).toLowerCase())) score+=3;
+  if(slot==="700" && /bold|black|heavy/.test((family+" "+full+" "+style).toLowerCase())) score+=3;
+  return score;
+}
+function buildLocalFontGroups(records=[]){
+  localFontGroups=new Map();
+  localFontAliasToGroup=new Map();
+
+  for(const record of records){
+    const family=String(record?.family||"").trim();
+    if(!family || isSymbolOrIconFontFamily(family)) continue;
+
+    const groupName=logicalFamilyName(record);
+    const slot=inferFontWeightSlot(record);
+
+    if(!localFontGroups.has(groupName)){
+      localFontGroups.set(groupName,{name:groupName,slots:new Map(),aliases:new Set()});
+    }
+    const group=localFontGroups.get(groupName);
+    group.aliases.add(family);
+    localFontAliasToGroup.set(family,groupName);
+
+    const old=group.slots.get(slot);
+    if(!old || recordPreferenceScore(record,slot,groupName)>recordPreferenceScore(old,slot,groupName)){
+      group.slots.set(slot,record);
+    }
+  }
+}
+function localFontGroupForValue(value=""){
+  const v=String(value);
+  if(localFontGroups.has(v)) return localFontGroups.get(v);
+  const groupName=localFontAliasToGroup.get(v);
+  return groupName ? localFontGroups.get(groupName) : null;
+}
+function canonicalLocalFontValue(value=""){
+  const group=localFontGroupForValue(value);
+  return group?.name || value;
+}
+function availableWeightSlotsForFamily(family){
+  const group=localFontGroupForValue(family);
+  if(group) return new Set(group.slots.keys());
+
+  // Once the PC font list has been read, don't offer unverified weights.
+  // This avoids a control that appears to change but visually does nothing.
+  if(localFontRecords.length) return new Set(["400"]);
+  return null;
+}
+function weightLabel(v){
+  return ({300:"細字",400:"標準",500:"中太",700:"太字"})[String(v)] || String(v);
+}
+function nearestAvailableWeight(current,available){
+  const order=["300","400","500","700"];
+  const cur=Number(current||400);
+  return order
+    .filter(v=>available.has(v))
+    .sort((a,b)=>Math.abs(Number(a)-cur)-Math.abs(Number(b)-cur))[0] || "400";
+}
+function exactRecordForWeight(family,weight){
+  const group=localFontGroupForValue(family);
+  if(!group)return null;
+  return group.slots.get(String(weight)) || null;
+}
+function localFaceKey(family,weight){
+  const group=localFontGroupForValue(family);
+  return group ? `${group.name}::${weight}` : "";
+}
+function familyCss(value,weight="400"){
+  if(value==="system") return '-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif';
+
+  const group=localFontGroupForValue(value);
+  if(group){
+    const record=group.slots.get(String(weight));
+    const key=localFaceKey(group.name,weight);
+    const activated=key ? activatedLocalFaces.get(key) : "";
+    if(activated){
+      return `${quoteFontFamily(activated)},${quoteFontFamily("Yu Gothic")},${quoteFontFamily("Meiryo")},sans-serif`;
+    }
+    if(record?.family){
+      // Important for fonts where Light/Medium/Bold are separate family names.
+      return `${quoteFontFamily(record.family)},${quoteFontFamily(group.name)},${quoteFontFamily("Yu Gothic")},${quoteFontFamily("Meiryo")},sans-serif`;
+    }
+  }
+
+  return `${quoteFontFamily(value)},${quoteFontFamily("Yu Gothic")},${quoteFontFamily("Meiryo")},sans-serif`;
+}
+async function activateLocalWeightFace(family,weight){
+  const record=exactRecordForWeight(family,weight);
+  const key=localFaceKey(family,weight);
+  if(!record || !key || activatedLocalFaces.has(key)) return !!record;
+  if(typeof record.blob!=="function") return false;
+
+  try{
+    const blob=await record.blob();
+    const buf=await blob.arrayBuffer();
+    const internal=`JVFLocal_${Math.random().toString(36).slice(2)}`;
+    const face=new FontFace(internal,buf,{weight:String(weight),style:"normal"});
+    await face.load();
+    document.fonts.add(face);
+    activatedLocalFaces.set(key,internal);
+    return true;
+  }catch(e){
+    console.warn("Exact local font activation failed",family,weight,e);
+    return false;
+  }
+}
+function updateInlineFontPreviews(){
+  const pairs=[
+    ["source","sourceFontFamily","sourceFontWeight","sourceInlineFontPreview"],
+    ["target","targetFontFamily","targetFontWeight","targetInlineFontPreview"]
+  ];
+  for(const [target,fid,wid,pid] of pairs){
+    const sel=$(fid), weight=$(wid)?.value||"400", preview=$(pid);
+    if(!sel)continue;
+    const fam=familyCss(sel.value,weight);
+    sel.style.fontFamily=fam;
+    sel.style.fontWeight=weight;
+    if(preview){
+      preview.style.fontFamily=fam;
+      preview.style.fontWeight=weight;
+    }
+  }
+}
+function optionExists(select,value){return [...select.options].some(o=>o.value===value);}
+function addFontOptionToSelect(select,family,label=family,source="extra"){
+  if(optionExists(select,family)) return family;
+  const o=document.createElement("option");
+  o.value=family;o.textContent=label;o.dataset.fontSource=source;o.dataset.family=family;
+  select.appendChild(o);
+  return family;
+}
+function addFontEverywhere(family,label=family,source="extra"){
+  if(!family)return "";
+  addFontOptionToSelect($("sourceFontFamily"),family,label,source);
+  addFontOptionToSelect($("targetFontFamily"),family,label,source);
+  return family;
+}
+function updateWeightAvailability(target="source"){
+  const family=$(target==="target"?"targetFontFamily":"sourceFontFamily")?.value || "";
+  const sel=$(target==="target"?"targetFontWeight":"sourceFontWeight");
+  const hint=$(target==="target"?"targetWeightHint":"sourceWeightHint");
+  if(!sel)return;
+
+  const available=availableWeightSlotsForFamily(family);
+  if(!available){
+    [...sel.options].forEach(o=>{o.disabled=false;o.textContent=weightLabel(o.value);});
+    if(hint) hint.textContent="PCフォントを読み込むと、実際にある太さだけ選べます。";
+    return;
+  }
+
+  [...sel.options].forEach(o=>{
+    const ok=available.has(o.value);
+    o.disabled=!ok;
+    o.textContent=weightLabel(o.value)+(ok?"":"（このフォントにはありません）");
+  });
+
+  if(!available.has(sel.value)){
+    sel.value=nearestAvailableWeight(sel.value,available);
+  }
+
+  const names=["300","400","500","700"].filter(v=>available.has(v)).map(weightLabel);
+  const group=localFontGroupForValue(family);
+  if(hint){
+    hint.textContent=group
+      ? `実際に使える太さ：${names.join("・")}`
+      : `太さ情報を確認できないため、標準のみ使用します。`;
+  }
+}
+function updateAllWeightAvailability(){
+  updateWeightAvailability("source");
+  updateWeightAvailability("target");
+}
+function addLocalFontOptionPrioritized(select,family,label=family){
+  if(optionExists(select,family)) return family;
+  const o=document.createElement("option");
+  o.value=family;
+  o.textContent=label;
+  o.dataset.fontSource="local";
+  o.dataset.family=family;
+
+  if(isUdDigiFamily(family)){
+    const firstNonUd=[...select.options].find(x=>!isUdDigiFamily(x.value));
+    if(firstNonUd) select.insertBefore(o,firstNonUd);
+    else select.appendChild(o);
+  }else{
+    select.appendChild(o);
+  }
+  return family;
+}
+function ensureFontValueOption(value,label=""){
+  if(!value)return;
+  [$("sourceFontFamily"),$("targetFontFamily")].forEach(sel=>{if(!optionExists(sel,value)){const o=document.createElement("option");o.value=value;o.textContent=label||value;o.dataset.fontSource="saved";o.dataset.family=value;sel.appendChild(o);}});
+}
+function updateFontStatus(message,kind=""){
+  const el=$("fontStatus");if(!el)return;el.textContent=message;el.className=`font-status ${kind}`.trim();
+}
+function currentFontFamilyForPreview(){
+  const target=activeFontTarget==="target"?"target":"source";
+  const value=$(target==="target"?"targetFontFamily":"sourceFontFamily").value;
+  return familyCss(value,selectedWeight(target));
+}
+function updateFontPreview(){
+  const el=$("fontPreview");if(!el)return;
+  el.style.fontFamily=currentFontFamilyForPreview();
+  el.style.fontWeight=selectedWeight(activeFontTarget);
+}
+function renderFontChoices(){
+  const grid=$("fontGrid");if(!grid)return;
+  const q=($("fontSearch")?.value||"").trim().toLocaleLowerCase("ja");
+  const target=activeFontTarget==="target"?"target":"source";
+  const sel=$(target==="target"?"targetFontFamily":"sourceFontFamily");
+  const rows=[...sel.options].filter(o=>!q || o.textContent.toLocaleLowerCase("ja").includes(q));
+  grid.innerHTML="";
+  if(!rows.length){grid.classList.remove("hidden");grid.innerHTML='<div class="small">該当するフォントがありません。</div>';return;}
+  rows.slice(0,200).forEach(o=>{
+    const b=document.createElement("button");b.type="button";b.className="font-chip"+(o.value===sel.value?" selected-font":"");
+    const fam=familyCss(o.value,selectedWeight(target));
+    b.innerHTML=`<strong>${o.textContent}</strong><span>あいうえお　漢字　ABC 123</span>`;
+    b.querySelector("strong").style.fontFamily='system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+    b.querySelector("strong").style.fontWeight="700";
+    b.querySelector("span").style.fontFamily=fam;b.querySelector("span").style.fontWeight=selectedWeight(target);
+    b.onclick=()=>{sel.value=o.value;activeFontTarget=target;applyExactFontSelection(target);};grid.appendChild(b);
+  });
+  grid.classList.remove("hidden");
+}
+async function loadLocalFonts(){
+  if(!("queryLocalFonts" in window)){
+    updateFontStatus("このブラウザではPC内フォント一覧の取得に対応していません。標準のフォントメニューから選んでください。","warn");
+    return;
+  }
+  try{
+    updateFontStatus("PC内フォントの利用許可を待っています…");
+    const fonts=await window.queryLocalFonts();
+    localFontRecords=fonts.filter(f=>f?.family && !isSymbolOrIconFontFamily(f.family));
+    buildLocalFontGroups(localFontRecords);
+
+    const collator=new Intl.Collator("ja",{numeric:true,sensitivity:"base"});
+    const groups=[...localFontGroups.keys()].sort((a,b)=>{
+      const au=isUdDigiFamily(a), bu=isUdDigiFamily(b);
+      if(au!==bu) return au ? -1 : 1;
+      return collator.compare(a,b);
+    });
+
+    const sourceOld=$("sourceFontFamily").value;
+    const targetOld=$("targetFontFamily").value;
+
+    // Remove options added by a previous PC-font scan; rebuild as logical families.
+    [$("sourceFontFamily"),$("targetFontFamily")].forEach(sel=>{
+      [...sel.options].filter(o=>o.dataset.fontSource==="local").forEach(o=>o.remove());
+    });
+
+    groups.forEach(groupName=>{
+      addLocalFontOptionPrioritized($("sourceFontFamily"),groupName,groupName);
+      addLocalFontOptionPrioritized($("targetFontFamily"),groupName,groupName);
+    });
+
+    const restoreCanonical=(id,oldValue)=>{
+      const sel=$(id);
+      const canonical=canonicalLocalFontValue(oldValue);
+      if(optionExists(sel,canonical)) sel.value=canonical;
+      else if(optionExists(sel,oldValue)) sel.value=oldValue;
+    };
+    restoreCanonical("sourceFontFamily",sourceOld);
+    restoreCanonical("targetFontFamily",targetOld);
+
+    updateAllWeightAvailability();
+
+    // Load the exact selected face when the browser exposes font bytes.
+    for(const target of ["source","target"]){
+      const family=$(target==="target"?"targetFontFamily":"sourceFontFamily").value;
+      const weight=$(target==="target"?"targetFontWeight":"sourceFontWeight").value;
+      await activateLocalWeightFace(family,weight);
+    }
+
+    applySettings();
+    renderFontChoices();
+    updateFontStatus(
+      `PC内フォントを ${groups.length} グループに整理しました。Light / Medium / Bold が別名で登録されているフォントも同じ書体としてまとめ、実在する太さだけ選べます。UD Digi 系は最上部です。`,
+      "ok"
+    );
+  }catch(e){
+    console.warn(e);
+    updateFontStatus("PC内フォント一覧を取得できませんでした。ブラウザの許可設定を確認してください。","warn");
+  }
+}
+function addNamedFont(){
+  const family=$("customFontName").value.trim();if(!family)return;
+  addFontEverywhere(family,family,"named");
+  try{const saved=JSON.parse(localStorage.getItem("jvf_named_fonts")||"[]");if(!saved.includes(family)){saved.push(family);localStorage.setItem("jvf_named_fonts",JSON.stringify(saved));}}catch(e){}
+  const sel=$(activeFontTarget==="target"?"targetFontFamily":"sourceFontFamily");sel.value=family;applySettings();renderFontChoices();
+  const likely=document.fonts?.check?.(`16px ${quoteFontFamily(family)}`,"あいうえお漢字ABC") ?? true;
+  updateFontStatus(likely?`「${family}」を追加しました。プレビューで表示を確認してください。`:`「${family}」を登録しましたが、ブラウザがこの名前のフォントを確認できませんでした。`,likely?"ok":"warn");
+}
+function loadNamedFonts(){try{for(const family of JSON.parse(localStorage.getItem("jvf_named_fonts")||"[]"))addFontEverywhere(family,family,"named");}catch(e){}}
+function filterFontOptions(){renderFontChoices();}
+function fillFormSelect(id){
+  const s=$(id); s.innerHTML="";
+  forms.forEach(([v,j,e])=>{const o=document.createElement("option");o.value=v;o.textContent=j;s.appendChild(o)});
+}
+["fromForm","toForm","learnerFrom","learnerTo"].forEach(fillFormSelect);
+$("fromForm").value="masu"; $("toForm").value="te";
+$("learnerFrom").value="masu"; $("learnerTo").value="te";
+
+
+const perKanjiRubyMap = {
+  "勉強":[["勉","べん"],["強","きょう"]],
+  "結婚":[["結","けっ"],["婚","こん"]],
+  "買い物":[["買","か"],["い",""],["物","もの"]],
+  "食事":[["食","しょく"],["事","じ"]],
+  "散歩":[["散","さん"],["歩","ぽ"]],
+  "日本":[["日","に"],["本","ほん"]],
+  "手紙":[["手","て"],["紙","がみ"]],
+  "7時":[["7",""],["時","じ"]]
+};
+
+function rubyByCharacter(base, reading, tail=""){
+  const mapped=perKanjiRubyMap[base];
+  if(mapped){
+    return mapped.map(([ch,rt])=>{
+      if(!rt) return esc(ch);
+      return `<ruby>${esc(ch)}<rt>${esc(rt)}</rt></ruby>`;
+    }).join("") + esc(tail);
+  }
+
+  // If the base is one kanji, keep the existing ruby behavior.
+  const kanjiChars=[...base].filter(ch=>/[\u3400-\u9fff々]/.test(ch));
+  if(kanjiChars.length<=1){
+    return `<ruby>${esc(base)}<rt>${esc(reading)}</rt></ruby>${esc(tail)}`;
+  }
+
+  // Fallback for an unmapped multi-kanji chunk: keep one ruby group rather than guess.
+  return `<ruby>${esc(base)}<rt>${esc(reading)}</rt></ruby>${esc(tail)}`;
+}
+
+function normalizeBreakMarkers(value){
+  return String(value??"").replace(/\\n/g,"\n").replace(/\r\n?/g,"\n");
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function escWithBreaks(s){return esc(normalizeBreakMarkers(s)).replace(/\n/g,"<br>");}
+
+function rubyLabelHTML(label){
+  if(!label) return "";
+  const normalized=normalizeBreakMarkers(label);
+  let out=escWithBreaks(normalized);
+  for(const [word,pairs] of Object.entries(perKanjiRubyMap)){
+    if(!normalized.includes(word)) continue;
+    const rendered=pairs.map(([ch,rt])=>rt?`<ruby>${esc(ch)}<rt>${esc(rt)}</rt></ruby>`:esc(ch)).join("");
+    out=out.replace(esc(word),rendered);
+  }
+  return out;
+}
+
+function rubyHTML(token){
+  const normalized=normalizeBreakMarkers(token);
+  return normalized.split(/(\s+)/).map(part=>{
+    if(!part.includes("|")) return escWithBreaks(part);
+    const bits=part.split("|");
+    if(bits.length===3) return rubyByCharacter(bits[0],bits[1],bits[2]);
+    return escWithBreaks(part);
+  }).join("");
+}
+function formText(item, form, script){
+  const val=item.forms[form]; if(!val) return "";
+  const label = script==="kana" ? item.label.kana : item.label.kanji;
+  const plainLabelHTML = label ? `<span class="context-label">${escWithBreaks(label)}</span>` : "";
+  const rubyLabel = label ? `<span class="context-label">${rubyLabelHTML(label)}</span>` : "";
+
+  let body="";
+  if(script==="kana") body=plainLabelHTML+escWithBreaks(val[0]);
+  else if(script==="kanji") body=plainLabelHTML+escWithBreaks(val[1]);
+  else body=rubyLabel+rubyHTML(val[2]);
+
+  return `<span class="flash-text">${body}</span>`;
+}
+function plainAnswer(item, form){
+  const val=item.forms[form]; return val ? [val[0],val[1]] : [];
+}
+function selectedGroups(cls){return [...document.querySelectorAll(cls+":checked")].map(x=>+x.value)}
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x}
+
+function buildTeacherDeck(){
+  const gs=selectedGroups(".grp");
+  deck=data.filter(x=>x.g===0 || gs.includes(x.g));
+  if($("orderMode").value==="shuffle") deck=shuffle(deck);
+  idx=0; flipped=false; renderTeacher();
+}
+
+function applyPanelBehavior(el,wrapMode="auto"){
+  if(!el)return;
+  el.classList.toggle("wrap-auto",wrapMode==="auto");
+  el.classList.toggle("wrap-shrink",wrapMode==="shrink");
+  el.classList.toggle("wrap-manual",wrapMode==="manual");
+  // Unicodeの双方向処理に任せる。アラビア語・ヘブライ語は自動でRTL。
+  el.setAttribute("dir","auto");
+  if(wrapMode!=="shrink" && !el.classList.contains("preview-inner")) el.style.fontSize="";
+}
+function innerAvailableSize(el){
+  const cs=getComputedStyle(el);
+  return {
+    w:Math.max(1,el.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0)-4),
+    h:Math.max(1,el.clientHeight-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0)-4)
+  };
+}
+function contentBox(el){
+  const content=el.querySelector(".flash-text") || el;
+  const r=content.getBoundingClientRect();
+  return {w:r.width,h:r.height};
+}
+function fitSingleLineElement(el,basePx,minPx=12){
+  if(!el || !el.classList.contains("wrap-shrink") || el.clientWidth<2 || el.clientHeight<2){
+    return {size:basePx,fits:true};
+  }
+  const available=innerAvailableSize(el);
+  const fitsAt=(px)=>{
+    el.style.fontSize=px+"px";
+    const b=contentBox(el);
+    return b.w<=available.w+0.5 && b.h<=available.h+0.5;
+  };
+  if(fitsAt(basePx)) return {size:basePx,fits:true};
+  let lo=minPx, hi=basePx, best=minPx;
+  if(!fitsAt(minPx)) return {size:minPx,fits:false};
+  for(let i=0;i<14;i++){
+    const mid=(lo+hi)/2;
+    if(fitsAt(mid)){best=mid;lo=mid;}else{hi=mid;}
+  }
+  const finalSize=Math.max(minPx,Math.floor(best*10)/10);
+  el.style.fontSize=finalSize+"px";
+  return {size:finalSize,fits:true};
+}
+function fitAllShrinkPanels(){
+  requestAnimationFrame(()=>{
+    const sourceBase=+$("sourceFontSize").value;
+    const targetBase=+$("targetFontSize").value;
+    fitSingleLineElement($("questionCard"),sourceBase);
+    fitSingleLineElement($("card"),sourceBase);
+    fitSingleLineElement($("answerCard"),targetBase);
+    if(document.body.classList.contains("fullscreen-teacher")){
+      fitSingleLineElement($("fullscreenQuestion"),sourceBase);
+      fitSingleLineElement($("fullscreenAnswer"),targetBase);
+    }
+  });
+}
+function applyAllPanelBehaviors(){
+  const sw=$("sourceWrapMode")?.value||"auto", tw=$("targetWrapMode")?.value||"auto";
+  [$("questionCard"),$("card"),$("fullscreenQuestion"),$("previewUpperInner")].forEach(el=>applyPanelBehavior(el,sw));
+  [$("answerCard"),$("fullscreenAnswer"),$("previewLowerInner")].forEach(el=>applyPanelBehavior(el,tw));
+  const fb=$("feedback");if(fb)fb.setAttribute("dir","auto");
+}
+
+function renderFullscreenOverlay(){
+  const fq=$("fullscreenQuestion"), fa=$("fullscreenAnswer");
+  if(!fq || !fa) return;
+  applyAllPanelBehaviors();
+  if(!deck.length){
+    fq.textContent="該当する動詞がありません";
+    fa.innerHTML="&nbsp;";
+    return;
+  }
+  const item=deck[idx];
+  fq.innerHTML=formText(item,$("fromForm").value,$("scriptMode").value);
+  fa.innerHTML=flipped ? formText(item,$("toForm").value,$("scriptMode").value) : "&nbsp;";
+}
+
+function renderTeacher(){
+  applyAllPanelBehaviors();
+  if(!deck.length){
+    $("questionCard").textContent="該当する動詞がありません";
+    $("answerCard").innerHTML="&nbsp;";
+    $("answerCard").style.visibility="visible";
+    $("answerCard").style.background=$("targetBgColor").value;
+    $("teacherProgress").textContent="";
+    renderFullscreenOverlay();
+    return
+  }
+  const item=deck[idx];
+  $("questionCard").innerHTML=formText(item,$("fromForm").value,$("scriptMode").value);
+  $("questionCard").style.color=$("sourceTextColor").value;
+  $("questionCard").style.background=$("sourceBgColor").value;
+  $("answerCard").style.color=$("targetTextColor").value;
+  $("answerCard").style.background=$("targetBgColor").value;
+  $("answerCard").style.visibility="visible";
+  $("answerCard").style.opacity=flipped?"1":"1";
+  $("answerCard").innerHTML=flipped ? formText(item,$("toForm").value,$("scriptMode").value) : "&nbsp;";
+  $("teacherProgress").textContent=`${idx+1} / ${deck.length}`+(item.g?`　・　グループ ${item.g}`:"");
+  renderFullscreenOverlay();
+  fitAllShrinkPanels();
+  updateSettingsPreview();
+}
+$("nextBtn").onclick=teacherAdvance;
+$("prevBtn").onclick=()=>{if(deck.length){idx=(idx-1+deck.length)%deck.length;flipped=false;renderTeacher()}};
+["fromForm","toForm","scriptMode"].forEach(id=>$(id).onchange=()=>{flipped=false;renderTeacher()});
+$("restartBtn").onclick=buildTeacherDeck;
+document.querySelectorAll(".grp").forEach(x=>x.onchange=buildTeacherDeck);
+$("orderMode").onchange=buildTeacherDeck;
+
+function switchMode(m){
+  mode=m;
+  $("teacherBtn").classList.toggle("active",m==="teacher");
+  $("learnerBtn").classList.toggle("active",m==="learner");
+  $("teacherControls").classList.toggle("hidden",m!=="teacher");
+  $("learnerControls").classList.toggle("hidden",m!=="learner");
+  $("teacherDisplay").classList.toggle("hidden",m!=="teacher");
+  $("learnerDisplay").classList.toggle("hidden",m!=="learner");
+  $("teacherNav").classList.toggle("hidden",m!=="teacher");
+  $("learnerArea").classList.toggle("hidden",m!=="learner");
+  if(m==="teacher") renderTeacher(); else startLearner();
+}
+$("teacherBtn").onclick=()=>switchMode("teacher");
+$("learnerBtn").onclick=()=>switchMode("learner");
+
+function startLearner(source=null){
+  const gs=selectedGroups(".lgrp");
+  let d=source || data.filter(x=>x.g===0 || gs.includes(x.g));
+  if($("learnerOrder").value==="shuffle") d=shuffle(d);
+  roundDeck=[...d]; roundIdx=0; missed=[]; answeredCurrent=false;
+  $("feedback").textContent="Enter your answer and press Check.";
+  $("answerInput").value="";
+  renderLearner();
+}
+function renderLearner(){
+  applyAllPanelBehaviors();
+  if(!roundDeck.length){
+    $("card").textContent="No verbs selected.";
+    $("learnerProgress").textContent="";
+    return;
+  }
+  if(roundIdx>=roundDeck.length){
+    if(missed.length){
+      const again=[...missed]; missed=[];
+      roundDeck=$("learnerOrder").value==="shuffle"?shuffle(again):again;
+      roundIdx=0;
+      $("feedback").textContent=`Review round: ${roundDeck.length} item(s) to try again.`;
+    } else {
+      $("card").textContent="All clear!";
+      $("learnerProgress").textContent="You completed all items correctly.";
+      return;
+    }
+  }
+  const item=roundDeck[roundIdx];
+  $("card").innerHTML=formText(item,$("learnerFrom").value,$("learnerScript").value);
+  $("card").style.color = $("sourceTextColor").value;
+  $("card").style.background = $("sourceBgColor").value;
+  $("learnerProgress").textContent=`${roundIdx+1} / ${roundDeck.length}`+(item.g?`  •  Group ${item.g}`:"");
+  fitAllShrinkPanels();
+  $("answerInput").value=""; answeredCurrent=false; $("answerInput").focus();
+}
+function normalize(s){return normalizeBreakMarkers(s).trim().replace(/\s+/g,"").replace(/[。、．，]/g,"")}
+function learnerCorrectAnswerHTML(item){
+  // Feedback should respect the learner's selected script mode, including per-character ruby.
+  return formText(item,$("learnerTo").value,$("learnerScript").value);
+}
+
+function checkAnswer(){
+  if(!roundDeck.length || roundIdx>=roundDeck.length) return;
+  const item=roundDeck[roundIdx], ans=normalize($("answerInput").value);
+  const correct=plainAnswer(item,$("learnerTo").value).map(normalize);
+  if(!ans){$("feedback").textContent="Please type an answer.";return}
+  answeredCurrent=true;
+  if(correct.includes(ans)){
+    $("feedback").innerHTML=`Correct! <strong class="feedback-answer" style="color:${$("targetTextColor").value}">${learnerCorrectAnswerHTML(item)}</strong>`;
+  }else{
+    if(!missed.includes(item)) missed.push(item);
+    $("feedback").innerHTML=`Not quite. Correct answer: <strong class="feedback-answer" style="color:${$("targetTextColor").value}">${learnerCorrectAnswerHTML(item)}</strong>`;
+  }
+}
+$("checkBtn").onclick=checkAnswer;
+$("answerInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault(); if(!answeredCurrent)checkAnswer(); else nextLearner();}});
+function nextLearner(){ if(!answeredCurrent){checkAnswer();return} roundIdx++; renderLearner(); }
+$("learnerNextBtn").onclick=nextLearner;
+$("showAnswerBtn").onclick=()=>{
+  if(!roundDeck.length||roundIdx>=roundDeck.length)return;
+  const item=roundDeck[roundIdx], correct=plainAnswer(item,$("learnerTo").value);
+  if(!missed.includes(item)) missed.push(item);
+  answeredCurrent=true;
+  $("feedback").innerHTML=`Answer: <strong class="feedback-answer" style="color:${$("targetTextColor").value}">${learnerCorrectAnswerHTML(item)}</strong> — This item will appear again.`;
+};
+$("learnerStartBtn").onclick=()=>startLearner();
+["learnerFrom","learnerTo","learnerScript","learnerOrder"].forEach(id=>$(id).onchange=()=>startLearner());
+document.querySelectorAll(".lgrp").forEach(x=>x.onchange=()=>startLearner());
+
+
+
+function selectPreviewSettings(target="source",scroll=true){
+  const source=target!=="target";
+  const panel=$(source?"sourceSettingsPanel":"targetSettingsPanel");
+  const preview=$(source?"previewUpper":"previewLower");
+  const otherPanel=$(source?"targetSettingsPanel":"sourceSettingsPanel");
+  const otherPreview=$(source?"previewLower":"previewUpper");
+
+  panel?.classList.add("settings-selected");
+  preview?.classList.add("preview-selected");
+  otherPanel?.classList.remove("settings-selected");
+  otherPreview?.classList.remove("preview-selected");
+
+  activeFontTarget=source?"source":"target";
+  updateFontPreview();
+  renderFontChoices();
+
+  if(scroll && panel){
+    panel.scrollIntoView({behavior:"smooth",block:"center"});
+    setTimeout(()=>{
+      const first=panel.querySelector("select,input,button");
+      if(first && typeof first.focus==="function") first.focus({preventScroll:true});
+    },260);
+  }
+}
+$("previewUpper")?.addEventListener("click",()=>selectPreviewSettings("source",true));
+$("previewLower")?.addEventListener("click",()=>selectPreviewSettings("target",true));
+
+function updateSettingsPreview(){
+  const pu=$("previewUpper"), pl=$("previewLower");
+  const pui=$("previewUpperInner"), pli=$("previewLowerInner");
+  const warn=$("previewOverflowWarning");
+  if(!pu || !pl || !pui || !pli) return;
+
+  const sp=familyCss($("sourceFontFamily").value,$("sourceFontWeight").value);
+  const tp=familyCss($("targetFontFamily").value,$("targetFontWeight").value);
+
+  pu.style.background=$("sourceBgColor").value;
+  pl.style.background=$("targetBgColor").value;
+
+  pui.style.color=$("sourceTextColor").value;
+  pli.style.color=$("targetTextColor").value;
+  pui.style.fontFamily=sp;
+  pli.style.fontFamily=tp;
+  pui.style.fontWeight=$("sourceFontWeight").value;
+  pli.style.fontWeight=$("targetFontWeight").value;
+  applyAllPanelBehaviors();
+  updateFontPreview();
+
+  if(deck && deck.length){
+    const item=deck[idx] || deck[0];
+    pui.innerHTML=formText(item,$("fromForm").value,$("scriptMode").value);
+    pli.innerHTML=formText(item,$("toForm").value,$("scriptMode").value);
+  }else{
+    pui.textContent="問題";
+    pli.textContent="答え";
+  }
+
+  requestAnimationFrame(()=>{
+    const teacher=$("teacherDisplay");
+    const questionCard=$("questionCard");
+    const teacherW=teacher?.clientWidth || 900;
+    const teacherH=teacher?.clientHeight || 620;
+    const rowGap=12;
+    const cardW=questionCard?.clientWidth || teacherW;
+    const cardH=questionCard?.clientHeight || Math.max(1,(teacherH-rowGap)/2);
+
+    // プレビュー表示は、実物カードとの比率だけ合わせる
+    const previewW=Math.max(1,pu.clientWidth);
+    const previewH=Math.max(1,pu.clientHeight);
+    const scale=Math.min(previewW/cardW, previewH/cardH);
+    const measureShrink=(htmlText,fontPx,fontFamily,fontWeight)=>{
+      const card=document.createElement("div");
+      card.className="card wrap-shrink";
+      card.setAttribute("dir","auto");
+      card.style.position="fixed";
+      card.style.left="-100000px";
+      card.style.top="0";
+      card.style.visibility="hidden";
+      card.style.pointerEvents="none";
+      card.style.width=cardW+"px";
+      card.style.height=cardH+"px";
+      card.style.minHeight="0";
+      card.style.fontSize=fontPx+"px";
+      card.style.fontFamily=fontFamily;
+      card.style.fontWeight=fontWeight;
+      card.innerHTML=htmlText || "&nbsp;";
+      document.body.appendChild(card);
+      const result=fitSingleLineElement(card,fontPx,12);
+      card.remove();
+      return result;
+    };
+
+    const sourceMode=$("sourceWrapMode").value;
+    const targetMode=$("targetWrapMode").value;
+    const sourceFit=sourceMode==="shrink"
+      ? measureShrink(pui.innerHTML,+$("sourceFontSize").value,sp,$("sourceFontWeight").value)
+      : {size:+$("sourceFontSize").value,fits:true};
+    const targetFit=targetMode==="shrink"
+      ? measureShrink(pli.innerHTML,+$("targetFontSize").value,tp,$("targetFontWeight").value)
+      : {size:+$("targetFontSize").value,fits:true};
+
+    pui.style.fontSize=(sourceFit.size*scale)+"px";
+    pli.style.fontSize=(targetFit.size*scale)+"px";
+    pui.style.transform="translate(-50%,-50%)";
+    pli.style.transform="translate(-50%,-50%)";
+
+    const testOverflow=(htmlText,fontPx,fontFamily,fontWeight,wrapMode)=>{
+      if(wrapMode==="shrink") return !measureShrink(htmlText,fontPx,fontFamily,fontWeight).fits;
+      const card=document.createElement("div");
+      card.className="card "+(wrapMode==="manual"?"wrap-manual":"wrap-auto");
+      card.setAttribute("dir","auto");
+      card.style.position="fixed";
+      card.style.left="-100000px";
+      card.style.top="0";
+      card.style.visibility="hidden";
+      card.style.pointerEvents="none";
+      card.style.width=cardW+"px";
+      card.style.height=cardH+"px";
+      card.style.minHeight="0";
+      card.style.fontSize=fontPx+"px";
+      card.style.fontFamily=fontFamily;
+      card.style.fontWeight=fontWeight;
+      card.innerHTML=htmlText || "&nbsp;";
+      document.body.appendChild(card);
+
+      const range=document.createRange();
+      range.selectNodeContents(card);
+      const textRect=range.getBoundingClientRect();
+      const cardRect=card.getBoundingClientRect();
+      const margin=4;
+
+      const overflow=
+        textRect.left < cardRect.left+margin ||
+        textRect.right > cardRect.right-margin ||
+        textRect.top < cardRect.top+margin ||
+        textRect.bottom > cardRect.bottom-margin;
+
+      card.remove();
+      return overflow;
+    };
+
+    const sourceOverflow=testOverflow(
+      pui.innerHTML,
+      +$("sourceFontSize").value,
+      sp,
+      $("sourceFontWeight").value,
+      $("sourceWrapMode").value
+    );
+    const targetOverflow=testOverflow(
+      pli.innerHTML,
+      +$("targetFontSize").value,
+      tp,
+      $("targetFontWeight").value,
+      $("targetWrapMode").value
+    );
+
+    if(warn){
+      if(sourceOverflow || targetOverflow){
+        const where=sourceOverflow && targetOverflow ? "上半分・下半分" : sourceOverflow ? "上半分" : "下半分";
+        warn.textContent=`注意：${where}は、この文字サイズだと実際のカードからはみ出す可能性があります。`;
+        warn.classList.add("show");
+      }else{
+        warn.classList.remove("show");
+      }
+    }
+  });
+}
+
+
+function applyLearnerFormLabels(){
+  ["learnerFrom","learnerTo"].forEach(id=>{
+    const s=$(id);
+    if(!s) return;
+    [...s.options].forEach(o=>{
+      // Built-in forms use stable internal keys.
+      if(learnerFormLabels[o.value]){
+        o.textContent=learnerFormLabels[o.value];
+        return;
+      }
+      // Uploaded columns keep their Japanese header internally as dataset.originalLabel.
+      const original=o.dataset.originalLabel || o.textContent;
+      if(learnerHeaderLabels[original]){
+        o.textContent=learnerHeaderLabels[original];
+      }else{
+        o.textContent=original;
+      }
+    });
+  });
+}
+
+function applySettings(){
+  updateAllWeightAvailability();
+  document.documentElement.style.setProperty("--source-font-size",$("sourceFontSize").value+"px");
+  document.documentElement.style.setProperty("--target-font-size",$("targetFontSize").value+"px");
+  if($("sourceFontSizeValue")) $("sourceFontSizeValue").textContent=$("sourceFontSize").value+" px";
+  if($("targetFontSizeValue")) $("targetFontSizeValue").textContent=$("targetFontSize").value+" px";
+  document.documentElement.style.setProperty("--source-font-family",familyCss($("sourceFontFamily").value,$("sourceFontWeight").value));
+  document.documentElement.style.setProperty("--target-font-family",familyCss($("targetFontFamily").value,$("targetFontWeight").value));
+  document.documentElement.style.setProperty("--source-font-weight",$("sourceFontWeight").value);
+  document.documentElement.style.setProperty("--target-font-weight",$("targetFontWeight").value);
+  document.documentElement.style.setProperty("--source-text",$("sourceTextColor").value);
+  document.documentElement.style.setProperty("--target-text",$("targetTextColor").value);
+  document.documentElement.style.setProperty("--source-bg",$("sourceBgColor").value);
+  document.documentElement.style.setProperty("--target-bg",$("targetBgColor").value);
+  applyAllPanelBehaviors();
+  updateInlineFontPreviews();
+  updateSettingsPreview();
+}
+const displaySettingIds=["sourceFontSize","targetFontSize","sourceFontFamily","targetFontFamily","sourceFontWeight","targetFontWeight","sourceTextColor","targetTextColor","sourceBgColor","targetBgColor","sourceWrapMode","targetWrapMode"];
+displaySettingIds.forEach(id=>$(id).oninput=()=>{applySettings(); if(mode==="teacher")renderTeacher(); else renderLearner();});
+["saveSettingsBtn","resetSettingsBtn"].forEach(id=>{
+  $(id).addEventListener("click",e=>e.stopPropagation());
+});
+function currentDisplaySettings(){
+  return {
+    version:4,
+    sourceSize:$("sourceFontSize").value,targetSize:$("targetFontSize").value,
+    sourceFont:$("sourceFontFamily").value,targetFont:$("targetFontFamily").value,
+    sourceWeight:$("sourceFontWeight").value,targetWeight:$("targetFontWeight").value,
+    sourceText:$("sourceTextColor").value,targetText:$("targetTextColor").value,
+    sourceBg:$("sourceBgColor").value,targetBg:$("targetBgColor").value,
+    sourceWrap:$("sourceWrapMode").value,targetWrap:$("targetWrapMode").value
+  };
+}
+function restoreSavedFontSelections(){
+  try{
+    const st=JSON.parse(localStorage.getItem("jvf_settings")||"null");if(!st)return;
+    ensureFontValueOption(st.sourceFont||st.font||"");ensureFontValueOption(st.targetFont||st.font||"");
+    if(st.sourceFont||st.font) $("sourceFontFamily").value=((st.sourceFont||st.font)==="ud-digi-nk"?"Yu Gothic":(st.sourceFont||st.font));
+    if(st.targetFont||st.font) $("targetFontFamily").value=((st.targetFont||st.font)==="ud-digi-nk"?"Yu Gothic":(st.targetFont||st.font));
+    applySettings();
+  }catch(e){}
+}
+function restoreDisplaySettings(){
+  try{
+    const st=JSON.parse(localStorage.getItem("jvf_settings")||"null");
+    if(st){
+      if(String(st.sourceFont||"").includes("UD Digi Kyokasho NK-R") || String(st.sourceFont||"").includes("Flashcard UD Kyokasho")) st.sourceFont="ud-digi-nk";
+      if(String(st.targetFont||"").includes("UD Digi Kyokasho NK-R") || String(st.targetFont||"").includes("Flashcard UD Kyokasho")) st.targetFont="ud-digi-nk";
+      ensureFontValueOption(st.sourceFont||st.font||"");ensureFontValueOption(st.targetFont||st.font||"");
+      $("sourceFontSize").value=st.sourceSize||st.size||150;$("targetFontSize").value=st.targetSize||st.size||150;
+      $("sourceFontFamily").value=((st.sourceFont||st.font)==="ud-digi-nk"?"Yu Gothic":(st.sourceFont||st.font||$("sourceFontFamily").value));$("targetFontFamily").value=((st.targetFont||st.font)==="ud-digi-nk"?"Yu Gothic":(st.targetFont||st.font||$("targetFontFamily").value));
+      $("sourceFontWeight").value=st.sourceWeight||"400";$("targetFontWeight").value=st.targetWeight||"400";
+      $("sourceTextColor").value=st.sourceText||st.text||"#111827";$("targetTextColor").value=st.targetText||"#2f5ee5";
+      $("sourceBgColor").value=st.sourceBg||st.bg||"#ffffff";$("targetBgColor").value=st.targetBg||"#f2f2f2";
+      $("sourceWrapMode").value=st.sourceWrap||"auto";$("targetWrapMode").value=st.targetWrap||"auto";
+    }
+  }catch(e){}
+  applySettings();
+}
+$("saveSettingsBtn").onclick=()=>{
+ localStorage.setItem("jvf_settings",JSON.stringify(currentDisplaySettings()));
+ alert("表示設定を保存しました。");
+};
+$("resetSettingsBtn").onclick=()=>{
+ $("sourceFontSize").value=150;$("targetFontSize").value=150;$("sourceFontFamily").value="Yu Gothic";$("targetFontFamily").value="Yu Gothic";
+ $("sourceFontWeight").value="400";$("targetFontWeight").value="400";
+ $("sourceTextColor").value="#111827";$("targetTextColor").value="#2f5ee5";$("sourceBgColor").value="#ffffff";$("targetBgColor").value="#f2f2f2";
+ $("sourceWrapMode").value="auto";$("targetWrapMode").value="auto";
+ applySettings();localStorage.removeItem("jvf_settings");
+};
+loadNamedFonts();
+restoreDisplaySettings();
+$("loadLocalFontsBtn").onclick=loadLocalFonts;
+$("sourceFontFamily").addEventListener("focus",()=>{activeFontTarget="source";updateFontPreview();renderFontChoices();});
+$("targetFontFamily").addEventListener("focus",()=>{activeFontTarget="target";updateFontPreview();renderFontChoices();});
+$("sourceFontWeight").addEventListener("focus",()=>{activeFontTarget="source";updateFontPreview();renderFontChoices();});
+$("targetFontWeight").addEventListener("focus",()=>{activeFontTarget="target";updateFontPreview();renderFontChoices();});
+async function applyExactFontSelection(target){
+  updateWeightAvailability(target);
+  const family=$(target==="target"?"targetFontFamily":"sourceFontFamily").value;
+  const weight=$(target==="target"?"targetFontWeight":"sourceFontWeight").value;
+  await activateLocalWeightFace(family,weight);
+  applySettings();
+  updateInlineFontPreviews();
+  updateFontPreview();
+  renderFontChoices();
+  if(mode==="teacher") renderTeacher(); else renderLearner();
+}
+$("sourceFontFamily").addEventListener("change",()=>applyExactFontSelection("source"));
+$("targetFontFamily").addEventListener("change",()=>applyExactFontSelection("target"));
+$("sourceFontWeight").addEventListener("change",()=>applyExactFontSelection("source"));
+$("targetFontWeight").addEventListener("change",()=>applyExactFontSelection("target"));
+$("fontSearch").addEventListener("input",()=>filterFontOptions());
+updateAllWeightAvailability();
+updateInlineFontPreviews();
+selectPreviewSettings("source",false);
+setVisibleTeacherPanels(2);
+
+
+
+function showImportMessage(message,type="info"){
+  const box=$("importMessage");
+  if(!box) return;
+  box.className="import-message "+type;
+  box.textContent=message;
+}
+function clearImportMessage(){
+  const box=$("importMessage");
+  if(!box) return;
+  box.className="import-message";
+  box.textContent="";
+}
+
+function normalizeInputText(text){
+  let t=String(text ?? "").replace(/\r/g,"");
+  // Accept ASCII comma, full-width comma, and Japanese comma as equivalent delimiters.
+  t=t.replace(/[，、]/g,",");
+  return t;
+}
+function stripRubyMarkup(s){
+  return String(s||"").replace(/([^\[\],\s]+)\[([^\]]+)\]/g,"$1");
+}
+function kanaFromRubyMarkup(s){
+  return String(s||"").replace(/([^\[\],\s]+)\[([^\]]+)\]/g,"$2");
+}
+function rubyMarkupToToken(s){
+  // Supports simple forms such as 書[か]きます / 来[き]ます.
+  const m=String(s||"").match(/^([^\[\]\s]+)\[([^\]]+)\](.*)$/);
+  if(!m) return stripRubyMarkup(s);
+  return `${m[1]}|${m[2]}|${m[3]}`;
+}
+function splitLine(line,sep){
+  return line.split(sep).map(x=>x.trim().replace(/^"|"$/g,""));
+}
+function parseDelimited(text){
+  const normalized=normalizeInputText(text);
+  const lines=normalized.split("\n").filter(x=>x.trim());
+  if(lines.length<2){
+    throw new Error("1行目にタイトル行が必要です。例：ます形,て形");
+  }
+
+  const sep=lines[0].includes("\t") ? "\t" : ",";
+  const rows=lines.map(line=>splitLine(line,sep));
+  const headers=rows[0].map(x=>x.trim());
+
+  // Old full-format files remain supported.
+  if(headers.includes("label_kana") && headers.includes("label_kanji")){
+    const result=[];
+    for(const r of rows.slice(1)){
+      const o={}; headers.forEach((h,i)=>o[h]=r[i]??"");
+      const item={g:+o.group||0,label:{kana:o.label_kana||"",kanji:o.label_kanji||o.label_kana||""},forms:{}};
+      for(const [key] of forms){
+        const ka=o[key+"_kana"]||"", kj=o[key+"_kanji"]||ka;
+        if(!ka) continue;
+        item.forms[key]=[ka,kj,kj];
+      }
+      if(Object.keys(item.forms).length) result.push(item);
+    }
+    if(!result.length) throw new Error("2行目以降に練習項目がありません。");
+    return {items:result, customForms:null};
+  }
+
+  const firstCell=(headers[0]||"").trim();
+  if(["1","2","3"].includes(firstCell)){
+    throw new Error('1行目にタイトル行が必要です。グループ付きなら「Group,ます形,て形」のように入力してください。');
+  }
+
+  const hasGroup=firstCell.toLowerCase()==="group";
+  const offset=hasGroup?1:0;
+  const formHeaders=headers.slice(offset).filter(Boolean);
+
+  if(formHeaders.length<2){
+    throw new Error("1行目に2つ以上の項目名が必要です。例：Group,ます形,て形,ない形");
+  }
+
+  const looksLikeCardData = s => /\[.+?\]/.test(s);
+  if(formHeaders.length>=2 && looksLikeCardData(formHeaders[0]) && looksLikeCardData(formHeaders[1])){
+    throw new Error("1行目にタイトル行が必要です。例：Group,ます形,て形,ない形");
+  }
+
+  // Create internal keys for every uploaded column.
+  const customForms=formHeaders.map((name,i)=>({key:`custom${i}`,name}));
+
+  const result=[];
+  for(let rowIndex=1; rowIndex<rows.length; rowIndex++){
+    const r=rows[rowIndex];
+
+    if(hasGroup){
+      const g=(r[0]||"").trim();
+      if(g && !["1","2","3"].includes(g)){
+        throw new Error(`${rowIndex+1}行目の Group は 1・2・3 のいずれかにしてください。`);
+      }
+    }
+
+    const item={
+      g:hasGroup ? (+r[0]||0) : 0,
+      label:{kana:"",kanji:""},
+      forms:{}
+    };
+
+    customForms.forEach((cf,i)=>{
+      const raw=(r[offset+i]||"").trim();
+      if(!raw) return;
+      const kanji=stripRubyMarkup(raw);
+      const kana=kanaFromRubyMarkup(raw);
+      item.forms[cf.key]=[kana,kanji,rubyMarkupToToken(raw)];
+    });
+
+    if(Object.keys(item.forms).length>=2) result.push(item);
+  }
+
+  if(!result.length) throw new Error("2行目以降に読み込める練習項目がありません。");
+  return {items:result,customForms};
+}
+
+let customPair=null;
+let uploadedForms=null;
+
+function restoreBuiltInFormOptions(){
+  uploadedForms=null;
+  ["fromForm","toForm","learnerFrom","learnerTo"].forEach(fillFormSelect);
+  $("fromForm").value="masu"; $("toForm").value="te";
+  $("learnerFrom").value="masu"; $("learnerTo").value="te";
+  applyLearnerFormLabels();
+}
+
+function applyUploadedFormOptions(customForms){
+  if(!customForms || !customForms.length) return;
+  uploadedForms=customForms;
+
+  const selectIds=["fromForm","toForm","learnerFrom","learnerTo"];
+  selectIds.forEach(id=>{
+    const s=$(id);
+    if(!s) return;
+    s.innerHTML="";
+    customForms.forEach(cf=>{
+      const o=document.createElement("option");
+      o.value=cf.key;
+      o.textContent=cf.name;
+      o.dataset.originalLabel=cf.name;
+      s.appendChild(o);
+    });
+  });
+
+  // Default: first uploaded column is the Question, second is the Answer.
+  ["fromForm","learnerFrom"].forEach(id=>{ if($(id)) $(id).value=customForms[0].key; });
+  ["toForm","learnerTo"].forEach(id=>{ if($(id)) $(id).value=customForms[1].key; });
+
+  applyLearnerFormLabels();
+}
+
+function loadText(text){
+  clearImportMessage();
+  try{
+    const parsed=parseDelimited(text);
+    data=parsed.items;
+
+    if(parsed.customForms){
+      customPair=null;
+      applyUploadedFormOptions(parsed.customForms);
+      $("setStatus").textContent=`カードセット ${data.length}項目（${parsed.customForms.length}列）`;
+    }else{
+      uploadedForms=null;
+      $("setStatus").textContent=`カードセット ${data.length}項目`;
+    }
+
+    document.querySelectorAll(".grp,.lgrp").forEach(x=>x.checked=true);
+    buildTeacherDeck();
+    applyLearnerFormLabels();
+    if(mode==="learner") startLearner();
+
+    const groupInfo=data.some(x=>x.g) ? " グループ情報も読み込みました。" : "";
+    const columnInfo=parsed.customForms ? ` ${parsed.customForms.length}列から問題・答えを自由に選べます。` : "";
+    showImportMessage(`読み込みました：${data.length}項目。${columnInfo}${groupInfo}`,"success");
+    return true;
+  }catch(e){
+    showImportMessage(`読み込みエラー：${e.message}`,"error");
+    return false;
+  }
+}
+$("loadPasteBtn").onclick=()=>loadText($("pasteArea").value);
+$("fileInput").onchange=e=>{
+ const f=e.target.files[0]; if(!f)return;
+ const reader=new FileReader(); reader.onload=()=>loadText(reader.result); reader.readAsText(f,"utf-8");
+};
+$("restorePresetBtn").onclick=()=>{
+ data=JSON.parse(JSON.stringify(preset)); customPair=null;
+ restoreBuiltInFormOptions();
+ $("setStatus").textContent="内蔵プリセット 62項目";
+ document.querySelectorAll(".grp,.lgrp").forEach(x=>x.checked=true);
+ buildTeacherDeck(); if(mode==="learner")startLearner();
+ showImportMessage("内蔵プリセットに戻しました。","info");
+};
+
+function currentDatasetPackage(){
+  return {
+    format:"JapaneseFlashcardsDataset",
+    formatVersion:1,
+    savedAt:new Date().toISOString(),
+    data:JSON.parse(JSON.stringify(data)),
+    uploadedForms:uploadedForms ? JSON.parse(JSON.stringify(uploadedForms)) : null,
+    selections:{
+      fromForm:$("fromForm").value,
+      toForm:$("toForm").value,
+      learnerFrom:$("learnerFrom").value,
+      learnerTo:$("learnerTo").value,
+      scriptMode:$("scriptMode").value,
+      orderMode:$("orderMode").value
+    }
+  };
+}
+function applyDatasetPackage(pkg){
+  if(!pkg || pkg.format!=="JapaneseFlashcardsDataset" || !Array.isArray(pkg.data)){
+    throw new Error("このファイルは日本語フラッシュカードのデータセットではありません。");
+  }
+  if(!pkg.data.length) throw new Error("データセットにカードがありません。");
+
+  data=JSON.parse(JSON.stringify(pkg.data));
+  customPair=null;
+
+  if(Array.isArray(pkg.uploadedForms) && pkg.uploadedForms.length>=2){
+    applyUploadedFormOptions(pkg.uploadedForms);
+  }else{
+    restoreBuiltInFormOptions();
+  }
+
+  const s=pkg.selections||{};
+  const setIfExists=(id,value)=>{
+    if(!value)return;
+    const el=$(id);
+    if(el && [...el.options].some(o=>o.value===value)) el.value=value;
+  };
+  setIfExists("fromForm",s.fromForm);
+  setIfExists("toForm",s.toForm);
+  setIfExists("learnerFrom",s.learnerFrom);
+  setIfExists("learnerTo",s.learnerTo);
+  if(s.scriptMode && [...$("scriptMode").options].some(o=>o.value===s.scriptMode)) $("scriptMode").value=s.scriptMode;
+  if(s.orderMode && [...$("orderMode").options].some(o=>o.value===s.orderMode)) $("orderMode").value=s.orderMode;
+
+  document.querySelectorAll(".grp,.lgrp").forEach(x=>x.checked=true);
+  $("setStatus").textContent=`データセット ${data.length}項目${uploadedForms?`（${uploadedForms.length}列）`:""}`;
+  buildTeacherDeck();
+  applyLearnerFormLabels();
+  if(mode==="learner") startLearner();
+  showImportMessage(`データセットを読み込みました：${data.length}項目。`,"success");
+}
+$("saveDatasetBtn").onclick=()=>{
+  try{
+    const json=JSON.stringify(currentDatasetPackage(),null,2);
+    const blob=new Blob([json],{type:"application/json;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="japanese_flashcards_dataset.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showImportMessage("データセットをJSONで保存しました。","success");
+  }catch(e){
+    showImportMessage(`データセット保存エラー：${e.message}`,"error");
+  }
+};
+$("loadDatasetBtn").onclick=()=>$("datasetFileInput").click();
+$("datasetFileInput").onchange=e=>{
+  const f=e.target.files?.[0];
+  if(!f)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      applyDatasetPackage(JSON.parse(reader.result));
+    }catch(err){
+      showImportMessage(`データセット読み込みエラー：${err.message}`,"error");
+    }finally{
+      $("datasetFileInput").value="";
+    }
+  };
+  reader.onerror=()=>showImportMessage("データセットファイルを読み込めませんでした。","error");
+  reader.readAsText(f,"utf-8");
+};
+
+function csvEscape(s){s=String(s??"");return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+$("downloadSetBtn").onclick=()=>{
+ let rows;
+ if(customPair){
+   const includeGroup=data.some(x=>x.g);
+   rows=[[...(includeGroup?["group"]:[]),customPair.sourceName,customPair.targetName]];
+   data.forEach(item=>{
+     const row=[];
+     if(includeGroup) row.push(item.g||"");
+     row.push(item.forms.customSource?.[1]||"",item.forms.customTarget?.[1]||"");
+     rows.push(row);
+   });
+ }else{
+   const headers=["group","label_kana","label_kanji",...forms.flatMap(([k])=>[k+"_kana",k+"_kanji"])];
+   rows=[headers];
+   data.forEach(item=>{
+     const row=[item.g,item.label.kana,item.label.kanji];
+     forms.forEach(([k])=>{const v=item.forms[k]||["",""];row.push(v[0]||"",v[1]||"")});
+     rows.push(row);
+   });
+ }
+ const csv=rows.map(r=>r.map(csvEscape).join(",")).join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="verb_flashcard_set.csv";a.click();URL.revokeObjectURL(a.href);
+};
+
+
+function teacherAdvance(){
+  if(!deck.length)return;
+  if(!flipped){
+    flipped=true;
+    renderTeacher();
+  }else{
+    idx=(idx+1)%deck.length;
+    flipped=false;
+    renderTeacher();
+  }
+}
+function enterTeacherFullscreen(){
+  if(mode!=="teacher") switchMode("teacher");
+  renderFullscreenOverlay();
+  document.body.classList.add("fullscreen-teacher");
+  $("fullscreenOverlay").setAttribute("aria-hidden","false");
+  requestAnimationFrame(()=>fitAllShrinkPanels());
+  const el=$("fullscreenOverlay");
+  if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+}
+function exitTeacherFullscreen(){
+  document.body.classList.remove("fullscreen-teacher");
+  $("fullscreenOverlay").setAttribute("aria-hidden","true");
+  if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+}
+$("fullscreenBtn").onclick=enterTeacherFullscreen;
+$("fullscreenExitBtn").onclick=(e)=>{e.stopPropagation();exitTeacherFullscreen()};
+document.addEventListener("fullscreenchange",()=>{
+  if(!document.fullscreenElement){
+    document.body.classList.remove("fullscreen-teacher");
+    $("fullscreenOverlay").setAttribute("aria-hidden","true");
+  }
+});
+$("fullscreenOverlay").addEventListener("mousedown",e=>{
+  if(document.body.classList.contains("fullscreen-teacher")) e.preventDefault();
+});
+$("fullscreenOverlay").addEventListener("click",e=>{
+  if(document.body.classList.contains("fullscreen-teacher")){
+    e.preventDefault();
+    teacherAdvance();
+  }
+});
+document.addEventListener("keydown",e=>{
+  if(!document.body.classList.contains("fullscreen-teacher")) return;
+  if(e.key===" " || e.key==="ArrowRight" || e.key==="Enter"){
+    e.preventDefault();
+    teacherAdvance();
+  }else if(e.key==="ArrowLeft"){
+    e.preventDefault();
+    if(deck.length){idx=(idx-1+deck.length)%deck.length;flipped=false;renderTeacher();}
+  }else if(e.key==="Escape"){
+    exitTeacherFullscreen();
+  }
+});
+
+buildTeacherDeck();
+applyLearnerFormLabels();
+applySettings();
+</script>
+
+<footer class="copyright-footer">
+  © 2026 Tetsuya Esaki / esaKITs — Enhanced Smart AI Kits
+  <span aria-hidden="true"> · </span>
+  <span>Apache License 2.0</span>
+</footer>
+
+</body>
+</html>
