@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>esaKITs — Teaching & Phonetics Tools</title>
+  <meta name="description" content="esaKITsの教育・音声学Webツール一覧。オンライン利用とオフライン利用の入口です。">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root{--bg:#f6f7f9;--card:#fff;--text:#172033;--muted:#667085;--line:#e4e7ec;--accent:#3157d5;--accent2:#eef2ff;--ok:#176b43;--warn:#8a5a00;--shadow:0 8px 28px rgba(24,39,75,.08)}
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+    a{color:inherit} .wrap{max-width:1100px;margin:auto;padding:48px 20px 64px}.hero{padding:28px 4px 26px}.brand{font-size:clamp(36px,7vw,64px);font-weight:800;letter-spacing:-.04em;margin:0}.tag{margin:4px 0 0;color:var(--muted);font-size:17px}.lead{max-width:760px;margin:22px 0 0;font-size:16px}.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;font-size:13px;color:var(--muted)}.dot{width:9px;height:9px;border-radius:50%;background:var(--ok)}.dot.warn{background:#d28a00}
+    h2{font-size:22px;margin:30px 0 14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:265px}.kicker{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}.title{font-size:23px;line-height:1.35;margin:6px 0 8px}.desc{color:var(--muted);font-size:14px;margin:0 0 16px;flex:1}.status{font-size:12px;margin:0 0 13px;color:var(--muted)}.status strong{color:var(--text)}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 14px;border-radius:11px;text-decoration:none;font-weight:700;font-size:14px;border:1px solid var(--line);background:#fff}.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.secondary{background:var(--accent2);color:#253c98;border-color:#d9e0ff}.btn:hover{filter:brightness(.98)}
+    .note{margin-top:28px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;color:var(--muted);font-size:14px}.note strong{color:var(--text)} footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+    @media(max-width:760px){.wrap{padding-top:28px}.grid{grid-template-columns:1fr}.card{min-height:auto}.actions{flex-direction:column}.btn{width:100%}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <h1 class="brand">esaKITs</h1>
+    <p class="tag">Enhanced Smart AI Kits — Teaching & Phonetics Tools</p>
+    <p class="lead">日本語教育・音声学の授業で使うブラウザツールをまとめています。オンラインではそのまま起動できます。オフライン用は事前にZIPを保存し、展開して各ツールの <code>index.html</code> を開いてください。</p>
+    <div class="legend"><span class="pill"><span class="dot"></span>オフライン利用可</span><span class="pill"><span class="dot warn"></span>オフラインでは一部機能制限</span></div>
+  </section>
+
+  <h2>公開ツール</h2>
+  <section class="grid" aria-label="公開ツール一覧">
+    <article class="card">
+      <div class="kicker">Japanese Teaching</div>
+      <h3 class="title">Japanese Flashcards</h3>
+      <p class="desc">動詞活用を中心に、Teacher Mode / Learner Modeで使えるブラウザ版フラッシュカード。かな・漢字・ルビ、表示設定、自作データにも対応。</p>
+      <p class="status"><strong>オフライン:</strong> 基本機能を利用できます。</p>
+      <div class="actions"><a class="btn primary" href="https://esakits.github.io/japanese-flashcards/">オンラインで使う</a><a class="btn secondary" href="https://github.com/esaKITs/japanese-flashcards/archive/refs/heads/main.zip">オフライン版を保存</a></div>
+    </article>
+
+    <article class="card">
+      <div class="kicker">Japanese Teaching</div>
+      <h3 class="title">Side-by-Side FlashCards</h3>
+      <p class="desc">ひらがな・カタカナ・ローマ字、助数詞、時刻・日付などを左右型カードで練習。Teacher Mode / Learner Mode対応。</p>
+      <p class="status"><strong>オフライン:</strong> 基本機能を利用できます。</p>
+      <div class="actions"><a class="btn primary" href="https://esakits.github.io/japanese-flashcards-side-by-side/">オンラインで使う</a><a class="btn secondary" href="https://github.com/esaKITs/japanese-flashcards-side-by-side/archive/refs/heads/main.zip">オフライン版を保存</a></div>
+    </article>
+
+    <article class="card">
+      <div class="kicker">Phonetics</div>
+      <h3 class="title">F1–F2 Classroom</h3>
+      <p class="desc">授業参加者がF1 / F2を入力し、クラス全体の母音空間を共有・比較するためのWebツール。平均・楕円・多角形比較・書き出しに対応。</p>
+      <p class="status"><strong>オフライン:</strong> 画面確認・個別作業は可能ですが、クラス間のリアルタイム共有には通信が必要です。</p>
+      <div class="actions"><a class="btn primary" href="https://esakits.github.io/f1-f2-classroom/">オンラインで使う</a><a class="btn secondary" href="https://github.com/esaKITs/f1-f2-classroom/archive/refs/heads/main.zip">オフライン用に保存</a></div>
+    </article>
+
+    <article class="card">
+      <div class="kicker">Japanese Teaching</div>
+      <h3 class="title">Picture Material Presenter</h3>
+      <p class="desc">絵教材・PDF・画像を読み込み、答え、かな／漢字、活用形、アクセント、無声化情報などを授業で提示するツール。</p>
+      <p class="status"><strong>オフライン:</strong> 一部機能は利用できますが、PDF.jsなど外部取得が必要な機能は通信なしでは制限されます。</p>
+      <div class="actions"><a class="btn primary" href="https://esakits.github.io/picture-material-presenter/">オンラインで使う</a><a class="btn secondary" href="https://github.com/esaKITs/picture-material-presenter/archive/refs/heads/main.zip">オフライン用に保存</a></div>
+    </article>
+  </section>
+
+  <div class="note"><strong>オフライン利用について</strong><br>ZIPはインターネット接続中に一度保存しておけば、その後はローカルに保持できます。ブラウザのセキュリティ仕様や、Firebase・CDNなど外部サービスを使う機能はオフラインでは動作しない場合があります。各カードに制限を明記しています。</div>
+
+  <footer>© 2026 Tetsuya Esaki / esaKITs — Enhanced Smart AI Kits</footer>
+</main>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
