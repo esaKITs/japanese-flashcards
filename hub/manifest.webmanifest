@@ -1,0 +1,9 @@
+{
+  "name": "esaKITs — Teaching & Phonetics Tools",
+  "short_name": "esaKITs",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#ffffff",
+  "lang": "ja"
+}
