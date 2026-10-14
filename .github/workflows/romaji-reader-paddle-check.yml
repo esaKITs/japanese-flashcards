@@ -1,0 +1,33 @@
+name: Romaji Reader PaddleOCR build check
+on:
+  push:
+    branches: [romaji-reader-ocr-rebuild]
+    paths:
+      - 'romaji-reader-paddle/**'
+      - '.github/workflows/romaji-reader-paddle-check.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: romaji-reader-paddle
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build standalone Pages assets
+        run: npm run build
+      - name: Verify generated entry point
+        run: |
+          test -f dist/index.html
+          grep -q './assets/' dist/index.html
+      - name: Upload test build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: romaji-reader-paddle-dist
+          path: romaji-reader-paddle/dist/
+          retention-days: 3
