@@ -1,0 +1,14 @@
+{
+  "name": "romaji-reader-rebuild",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@oovz/esearch-ocr": "8.4.4",
+    "onnxruntime-web": "1.19.2",
+    "vite": "^6.3.0"
+  }
+}
