@@ -66,12 +66,14 @@ const verbExceptionsGodan=new Set(["かえる","はいる","はしる","きる",
 const verbExceptionsIchidan=new Set(["たべる","みる","おきる","ねる","あびる","かりる","おりる","できる","いる","きる","あける","しめる","みせる","おしえる","わすれる","つづける","かんがえる","しらべる","はじめる","でかける","うまれる","そだてる","あつめる","きめる","つける","でる","おぼえる","つかれる","なれる","ふえる","へる","かえる","かんじる","しんじる","おちる","たてる","いれる","やめる","すてる","ねむれる"]);
 const godanRows={う:["わ","い","え","お"],く:["か","き","け","こ"],ぐ:["が","ぎ","げ","ご"],す:["さ","し","せ","そ"],つ:["た","ち","て","と"],ぬ:["な","に","ね","の"],ぶ:["ば","び","べ","ぼ"],む:["ま","み","め","も"],る:["ら","り","れ","ろ"]};
 const teTaEnding={う:["って","った"],つ:["って","った"],る:["って","った"],む:["んで","んだ"],ぶ:["んで","んだ"],ぬ:["んで","んだ"],く:["いて","いた"],ぐ:["いで","いだ"],す:["して","した"]};
-function verbStemForms(v){
+function verbStemForms(v,written=''){
  if(v==="する")return {stem:"し",masu:"し",nai:"しない",te:"して",ta:"した",dict:v,vol:"しよう",ba:"すれば",pot:"できる",pass:"される",cause:"させる",imperative:"しろ"};
  if(v==="くる")return {stem:"き",masu:"き",nai:"こない",te:"きて",ta:"きた",dict:v,vol:"こよう",ba:"くれば",pot:"こられる",pass:"こられる",cause:"こさせる",imperative:"こい"};
  if(v.endsWith("する")&&v.length>2){const p=v.slice(0,-2);const x=verbStemForms("する");return Object.fromEntries(Object.entries(x).map(([k,val])=>[k,p+val]));}
  if(!/[うくぐすつぬぶむる]$/.test(v))return null;
- const ichidan=v.endsWith("る")&&(verbExceptionsIchidan.has(v)||(!verbExceptionsGodan.has(v)&&/[いきしちにひみりえけせてねへめれ]る$/.test(v)));
+ const knownGodan=/^(帰る|切る|入る|走る|知る|要る|減る|滑る|喋る|握る|蹴る|参る|売る|取る|撮る|乗る|登る|触る|作る|治る|通る|送る|終わる|始まる|曲がる|渡る)$/.test(written);
+ const knownIchidan=/^(変える|替える|着る|居る|寝る|経る|見る|起きる|食べる|借りる|降りる|開ける|閉める|教える|忘れる|考える|調べる|出る|捨てる|疲れる|慣れる|増える)$/.test(written);
+ const ichidan=v.endsWith("る")&&(knownIchidan||(!knownGodan&&(verbExceptionsIchidan.has(v)||(!verbExceptionsGodan.has(v)&&/[いきしちにひみりえけせてねへめれ]る$/.test(v)))));
  if(ichidan){const p=v.slice(0,-1);return {stem:p,masu:p,nai:p+"ない",te:p+"て",ta:p+"た",dict:v,vol:p+"よう",ba:p+"れば",pot:p+"られる",pass:p+"られる",cause:p+"させる",imperative:p+"ろ"};}
  const end=v.slice(-1),p=v.slice(0,-1),row=godanRows[end],tt=teTaEnding[end];if(!row)return null;
  return {stem:p+row[1],masu:p+row[1],nai:p+row[0]+"ない",te:v==="いく"?"いって":p+tt[0],ta:v==="いく"?"いった":p+tt[1],dict:v,vol:p+row[3]+"う",ba:p+row[2]+"ば",pot:p+row[2]+"る",pass:p+row[0]+"れる",cause:p+row[0]+"せる",imperative:p+row[2]};
@@ -89,7 +91,7 @@ const generatedVerbForms=new Set();
 function registerVerbForm(w,r){if(!w||!r)return;generatedVerbForms.add(w);textbookKanaVocabulary.add(r);if(w!==r&&!textbookReadings.has(w))textbookReadings.set(w,r);}
 const sourceVerbEntries=[...proposedVocabulary13to30,...textbookReadings].filter(([w,r])=>/^[ぁ-ゖ]+$/.test(r)&&(/(?:する|[うくぐすつぬぶむる])$/.test(r))&&(/(?:する|[うくぐすつぬぶむる])$/.test(w)));
 for(const [written,reading] of sourceVerbEntries){
- const f=verbStemForms(reading);if(!f)continue;
+ const f=verbStemForms(reading,written);if(!f)continue;
  // Preserve kanji stems where possible, but always register exact kana forms.
  for(const [kind,base] of Object.entries(f)){
   if(kind==="stem")continue;
