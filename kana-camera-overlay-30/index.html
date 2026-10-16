@@ -94,7 +94,14 @@ for(const [written,reading] of sourceVerbEntries){
  const f=verbStemForms(reading,written);if(!f)continue;
  const writtenStem=written.endsWith("する")?written.slice(0,-2):written.slice(0,-1);
  const readingStem=reading.endsWith("する")?reading.slice(0,-2):reading.slice(0,-1);
- const asWritten=kanaForm=>kanaForm.startsWith(readingStem)?writtenStem+kanaForm.slice(readingStem.length):kanaForm;
+ const asWritten=kanaForm=>{
+  if(written==="来る"&&reading==="くる"){
+   if(kanaForm.startsWith("き"))return "来"+kanaForm.slice(1);
+   if(kanaForm.startsWith("こ"))return "来"+kanaForm.slice(1);
+   if(kanaForm.startsWith("く"))return "来"+kanaForm.slice(1);
+  }
+  return kanaForm.startsWith(readingStem)?writtenStem+kanaForm.slice(readingStem.length):kanaForm;
+ };
  const addForm=kanaForm=>registerVerbForm(asWritten(kanaForm),kanaForm);
  // Preserve kanji stems where possible, but always register exact kana forms.
  for(const [kind,base] of Object.entries(f)){
