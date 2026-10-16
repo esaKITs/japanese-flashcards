@@ -10,7 +10,7 @@ const textbookFixedExpressions=new Map([["そうですね","soo desu ne"],["そ�
 const textbookGrammarPatterns=[{"pattern":"(?:これ|それ|あれ|ここ|そこ|あそこ|わたし|あなた|ぼく|きょう|あした|きのう)は","from":"は","to":"わ"},{"pattern":"(?:こちら|そちら|あちら|どちら|この|その|あの|どの|なん|なに|だれ|どこ|いつ|いくら|どれ|どんな|どっち|みんな|だれか|なにか|どこか)は","from":"は","to":"わ"},{"pattern":"(?:[ぁ-んー]{2,})(?:には|では|とは|からは|までは|よりは)","from":"は","to":"わ"},{"pattern":"(?:[ぁ-んー]{2,})(?:へ|への)(?=[ぁ-んー]*$)","from":"へ","to":"え"},{"pattern":"(?:[ぁ-んー]{2,})を(?=[ぁ-んー]*$)","from":"を","to":"お"}].map(r=>({re:new RegExp(r.pattern,'g'),from:r.from,to:r.to}));
 function contextualRomaji(text){
  const fixedKey=text.replace(/[\s　。、！？!?…・]/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
- if(textbookFixedExpressions.has(fixedKey))return textbookFixedExpressions.get(fixedKey);
+ if(textbookFixedExpressions.has(fixedKey))return romaji(textbookFixedExpressions.get(fixedKey).replace(/\s+/g,''));
  const hiragana=text.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
  let t=hiragana;
  for(const rule of textbookGrammarPatterns)t=t.replace(rule.re,m=>m.slice(0,-1)+rule.to);
@@ -62,7 +62,7 @@ for(const noun of ["がくせい","せんせい","りゅうがくせい","だい
 }
 // Verb morphology: five-grade endings, ichidan, and irregular verbs.
 // Candidate forms are supplemental; original textbook entries retain priority.
-const verbExceptionsGodan=new Set(["かえる","はいる","はしる","きる","しる","いる","すべる","しゃべる","にぎる","へる","ける","まいる","さわる","のぼる","とる","おくる","うる","つくる","なおる","のこる","あがる","さがる","まがる","わたる","おわる","はじまる","かかる","かえる","ねる"]);
+const verbExceptionsGodan=new Set(["かえる","はいる","はしる","きる","しる","いる","すべる","しゃべる","にぎる","ける","まいる","さわる","のぼる","とる","おくる","うる","つくる","なおる","のこる","あがる","さがる","まがる","わたる","おわる","はじまる","かかる"]);
 const verbExceptionsIchidan=new Set(["たべる","みる","おきる","ねる","あびる","かりる","おりる","できる","いる","きる","あける","しめる","みせる","おしえる","わすれる","つづける","かんがえる","しらべる","はじめる","でかける","うまれる","そだてる","あつめる","きめる","つける","でる","おぼえる","つかれる","なれる","ふえる","へる","かえる","かんじる","しんじる","おちる","たてる","いれる","やめる","すてる","ねむれる"]);
 const godanRows={う:["わ","い","え","お"],く:["か","き","け","こ"],ぐ:["が","ぎ","げ","ご"],す:["さ","し","せ","そ"],つ:["た","ち","て","と"],ぬ:["な","に","ね","の"],ぶ:["ば","び","べ","ぼ"],む:["ま","み","め","も"],る:["ら","り","れ","ろ"]};
 const teTaEnding={う:["って","った"],つ:["って","った"],る:["って","った"],む:["んで","んだ"],ぶ:["んで","んだ"],ぬ:["んで","んだ"],く:["いて","いた"],ぐ:["いで","いだ"],す:["して","した"]};
@@ -92,19 +92,23 @@ function registerVerbForm(w,r){if(!w||!r)return;generatedVerbForms.add(w);textbo
 const sourceVerbEntries=[...proposedVocabulary13to30,...textbookReadings].filter(([w,r])=>/^[ぁ-ゖ]+$/.test(r)&&(/(?:する|[うくぐすつぬぶむる])$/.test(r))&&(/(?:する|[うくぐすつぬぶむる])$/.test(w)));
 for(const [written,reading] of sourceVerbEntries){
  const f=verbStemForms(reading,written);if(!f)continue;
+ const writtenStem=written.endsWith("する")?written.slice(0,-2):written.slice(0,-1);
+ const readingStem=reading.endsWith("する")?reading.slice(0,-2):reading.slice(0,-1);
+ const asWritten=kanaForm=>kanaForm.startsWith(readingStem)?writtenStem+kanaForm.slice(readingStem.length):kanaForm;
+ const addForm=kanaForm=>registerVerbForm(asWritten(kanaForm),kanaForm);
  // Preserve kanji stems where possible, but always register exact kana forms.
  for(const [kind,base] of Object.entries(f)){
   if(kind==="stem")continue;
-  registerVerbForm(base,base);
+  addForm(base);
   const endings=verbGrammarSuffixes[kind]||[];
-  for(const ending of endings)registerVerbForm(base+ending,base+ending);
+  for(const ending of endings)addForm(base+ending);
  }
  const naiStem=f.nai.slice(0,-2);
- for(const ending of ["なかった","なかったです","なければ","なければなりません","なくてもいい","なくてもいいです","なくてはいけません","なくなる","なくなります","なかったら"])registerVerbForm(naiStem+ending,naiStem+ending);
+ for(const ending of ["なかった","なかったです","なければ","なければなりません","なくてもいい","なくてもいいです","なくてはいけません","なくなる","なくなります","なかったら"])addForm(naiStem+ending);
  for(const derived of [f.pot,f.pass,f.cause]){
   const df=verbStemForms(derived);if(!df)continue;
-  for(const kind of ["dict","nai","te","ta","masu"])registerVerbForm(df[kind],df[kind]);
-  for(const ending of ["ます","ません","ました","ませんでした"])registerVerbForm(df.masu+ending,df.masu+ending);
+  for(const kind of ["dict","nai","te","ta","masu"])addForm(df[kind]);
+  for(const ending of ["ます","ません","ました","ませんでした"])addForm(df.masu+ending);
  }
 }
 const textbookKatakana=new Set([...textbookReadings.keys(),...textbookKanaVocabulary].filter(k=>/^[ァ-ヺー]+$/.test(k)));
