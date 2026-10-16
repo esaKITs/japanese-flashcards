@@ -5,7 +5,11 @@ function romaji(t){t=t.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(
 // Conservative particle-aware romanization for kana fragments.
 // OCR can split kanji from following kana: a standalone は/へ is usually a particle.
 // Do not globally replace ha/he inside words (e.g. はは, はじめ, へや).
+// Verified conversational expressions from the supplied textbook Word chapters (4, 7–12).
+const textbookFixedExpressions=new Map([["そうですね","soo desu ne"],["そうですか","soo desu ka"],["そうです","soo desu"],["ああそうですか","aa soo desu ka"],["いいですね","ii desu ne"],["いいですよ","ii desu yo"],["わかりました","wakarimashita"],["どうしたんですか","doo shitan desu ka"],["こちらはいかがですか","kochira wa ikaga desu ka"],["どちらも","dochira mo"],["ところで","tokoro de"],["またきます","mata kimasu"],["おまたせしました","omatase shimashita"],["いらっしゃいませ","irasshaimase"],["すみません","sumimasen"],["もうしわけありません","mooshiwake arimasen"],["しょうしょうおまちください","shooshoo omachi kudasai"],["はいどうぞ","hai doozo"],["どうもありがとうございます","doomo arigatoo gozaimasu"],["ありがとうございます","arigatoo gozaimasu"],["ありがとうございました","arigatoo gozaimashita"],["よろしくおねがいします","yoroshiku onegai shimasu"],["どうぞよろしくおねがいします","doozo yoroshiku onegai shimasu"],["もしもし","moshi moshi"],["まあまあです","maamaa desu"],["ぜんぶで","zenbu de"],["いくらですか","ikura desu ka"],["これをください","kore o kudasai"],["それをください","sore o kudasai"],["どこがいたいんですか","doko ga itain desu ka"],["どこへいきたいですか","doko e ikitai desu ka"],["なにがほしいですか","nani ga hoshii desu ka"],["いいえ","iie"],["はい","hai"],["あのう","anoo"],["じゃあ","jaa"],["ええ","ee"],["どうも","doomo"],["そうですねえ","soo desu nee"]]);
 function contextualRomaji(text){
+ const fixedKey=text.replace(/[\s　。、！？!?…・]/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
+ if(textbookFixedExpressions.has(fixedKey))return textbookFixedExpressions.get(fixedKey);
  const hiragana=text.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
  let t=hiragana;
  if(t==='は')t='わ';
