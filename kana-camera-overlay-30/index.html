@@ -60,6 +60,51 @@ for(const adjective of adjectiveInflectionBase.na){
 for(const noun of ["がくせい","せんせい","りゅうがくせい","だいがくせい","かいしゃいん","にほんじん","ともだち","やすみ","しごと","びょうき"]){
  for(const ending of ["で","でも","じゃありません","ではありません","じゃないです","ではないです","じゃなかったです","ではありませんでした","じゃなくて","ではなくて","でした"])registerGrammarForm(noun+ending);
 }
+// Verb morphology: five-grade endings, ichidan, and irregular verbs.
+// Candidate forms are supplemental; original textbook entries retain priority.
+const verbExceptionsGodan=new Set(["かえる","はいる","はしる","きる","しる","いる","すべる","しゃべる","にぎる","へる","ける","まいる","さわる","のぼる","とる","おくる","うる","つくる","なおる","のこる","あがる","さがる","まがる","わたる","おわる","はじまる","かかる","かえる","ねる"]);
+const verbExceptionsIchidan=new Set(["たべる","みる","おきる","ねる","あびる","かりる","おりる","できる","いる","きる","あける","しめる","みせる","おしえる","わすれる","つづける","かんがえる","しらべる","はじめる","でかける","うまれる","そだてる","あつめる","きめる","つける","でる","おぼえる","つかれる","なれる","ふえる","へる","かえる","かんじる","しんじる","おちる","たてる","いれる","やめる","すてる","ねむれる"]);
+const godanRows={う:["わ","い","え","お"],く:["か","き","け","こ"],ぐ:["が","ぎ","げ","ご"],す:["さ","し","せ","そ"],つ:["た","ち","て","と"],ぬ:["な","に","ね","の"],ぶ:["ば","び","べ","ぼ"],む:["ま","み","め","も"],る:["ら","り","れ","ろ"]};
+const teTaEnding={う:["って","った"],つ:["って","った"],る:["って","った"],む:["んで","んだ"],ぶ:["んで","んだ"],ぬ:["んで","んだ"],く:["いて","いた"],ぐ:["いで","いだ"],す:["して","した"]};
+function verbStemForms(v){
+ if(v==="する")return {stem:"し",masu:"し",nai:"しない",te:"して",ta:"した",dict:v,vol:"しよう",ba:"すれば",pot:"できる",pass:"される",cause:"させる",imperative:"しろ"};
+ if(v==="くる")return {stem:"き",masu:"き",nai:"こない",te:"きて",ta:"きた",dict:v,vol:"こよう",ba:"くれば",pot:"こられる",pass:"こられる",cause:"こさせる",imperative:"こい"};
+ if(v.endsWith("する")&&v.length>2){const p=v.slice(0,-2);const x=verbStemForms("する");return Object.fromEntries(Object.entries(x).map(([k,val])=>[k,p+val]));}
+ if(!/[うくぐすつぬぶむる]$/.test(v))return null;
+ const ichidan=v.endsWith("る")&&(verbExceptionsIchidan.has(v)||(!verbExceptionsGodan.has(v)&&/[いきしちにひみりえけせてねへめれ]る$/.test(v)));
+ if(ichidan){const p=v.slice(0,-1);return {stem:p,masu:p,nai:p+"ない",te:p+"て",ta:p+"た",dict:v,vol:p+"よう",ba:p+"れば",pot:p+"られる",pass:p+"られる",cause:p+"させる",imperative:p+"ろ"};}
+ const end=v.slice(-1),p=v.slice(0,-1),row=godanRows[end],tt=teTaEnding[end];if(!row)return null;
+ return {stem:p+row[1],masu:p+row[1],nai:p+row[0]+"ない",te:v==="いく"?"いって":p+tt[0],ta:v==="いく"?"いった":p+tt[1],dict:v,vol:p+row[3]+"う",ba:p+row[2]+"ば",pot:p+row[2]+"る",pass:p+row[0]+"れる",cause:p+row[0]+"せる",imperative:p+row[2]};
+}
+const verbGrammarSuffixes={
+ masu:["ます","ません","ました","ませんでした","ましょう","ましょうか","ませんか","たい","たいです","たくない","たくないです","たかった","たかったです","たくなかった","たくなかったです","ながら","にいく","にくる","はじめる","おわる","つづける","なおす","すぎる","やすい","にくい"],
+ te:["ください","くださいませんか","もいい","もいいですか","はいけません","はいけない","いる","います","いません","いました","いませんでした","から","みる","みます","みたい","しまう","しまいます","おく","おきます","ある","あります","あげる","くれる","もらう","いただく","くださる","も","いく","くる"],
+ ta:["ことがある","ことがあります","ことがない","ことがありません","り","りします","あとで","ほうがいい","ほうがいいです","ら","らどうですか","とき","ばかり","まま","ところ","んです","んですが"],
+ dict:["ことができる","ことができます","ことができない","ことができません","こと","の","まえに","とき","つもり","つもりです","よてい","よていです","とおもう","とおもいます","と","ために","まで","かもしれない","かもしれません","でしょう","はずです","べきです","ことにする","ことになる","ようにする","ようになる","ひつようがある","ところです","なら","ので","から","そうです"],
+ nai:["です","でください","で","でいる","でくださいませんか","ほうがいい","ほうがいいです","つもり","つもりです","ことにする","ようにする","ようにしてください","といけない","とだめ","とおもう","とおもいます","ことはない","わけではない"],
+ vol:["とおもう","とおもいます","とする","としている"],
+ ba:["いい","よかった","いいのに"]
+};
+const generatedVerbForms=new Set();
+function registerVerbForm(w,r){if(!w||!r)return;generatedVerbForms.add(w);textbookKanaVocabulary.add(r);if(w!==r&&!textbookReadings.has(w))textbookReadings.set(w,r);}
+const sourceVerbEntries=[...proposedVocabulary13to30,...textbookReadings].filter(([w,r])=>/^[ぁ-ゖ]+$/.test(r)&&(/(?:する|[うくぐすつぬぶむる])$/.test(r))&&(/(?:する|[うくぐすつぬぶむる])$/.test(w)));
+for(const [written,reading] of sourceVerbEntries){
+ const f=verbStemForms(reading);if(!f)continue;
+ // Preserve kanji stems where possible, but always register exact kana forms.
+ for(const [kind,base] of Object.entries(f)){
+  if(kind==="stem")continue;
+  registerVerbForm(base,base);
+  const endings=verbGrammarSuffixes[kind]||[];
+  for(const ending of endings)registerVerbForm(base+ending,base+ending);
+ }
+ const naiStem=f.nai.slice(0,-2);
+ for(const ending of ["なかった","なかったです","なければ","なければなりません","なくてもいい","なくてもいいです","なくてはいけません","なくなる","なくなります","なかったら"])registerVerbForm(naiStem+ending,naiStem+ending);
+ for(const derived of [f.pot,f.pass,f.cause]){
+  const df=verbStemForms(derived);if(!df)continue;
+  for(const kind of ["dict","nai","te","ta","masu"])registerVerbForm(df[kind],df[kind]);
+  for(const ending of ["ます","ません","ました","ませんでした"])registerVerbForm(df.masu+ending,df.masu+ending);
+ }
+}
 const textbookKatakana=new Set([...textbookReadings.keys(),...textbookKanaVocabulary].filter(k=>/^[ァ-ヺー]+$/.test(k)));
 function editDistance(a,b){const prev=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){let last=prev[0];prev[0]=i;for(let j=1;j<=b.length;j++){const old=prev[j];prev[j]=Math.min(prev[j]+1,prev[j-1]+1,last+(a[i-1]===b[j-1]?0:1));last=old}}return prev[b.length]}
 function dictionaryCandidate(t){
