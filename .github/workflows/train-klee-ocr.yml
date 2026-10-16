@@ -1,0 +1,41 @@
+name: Train Klee One OCR candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-jpn libtesseract-dev libleptonica-dev python3-pil make git
+      - name: Fetch OFL fonts and Tesseract training tools
+        run: |
+          git clone --depth 1 https://github.com/fontworks-fonts/Klee.git /tmp/klee
+          git clone --depth 1 https://github.com/tesseract-ocr/tesstrain.git /tmp/tesstrain
+          find /tmp/klee -iname '*.ttf' -o -iname '*.otf'
+          mkdir -p /tmp/tessdata
+          curl -fL https://github.com/tesseract-ocr/tessdata_best/raw/main/jpn.traineddata -o /tmp/tessdata/jpn.traineddata
+      - name: Generate ground truth
+        run: |
+          REG=$(find /tmp/klee -type f \( -iname '*Regular*.ttf' -o -iname '*Regular*.otf' \) | head -1)
+          SEMI=$(find /tmp/klee -type f \( -iname '*SemiBold*.ttf' -o -iname '*SemiBold*.otf' \) | head -1)
+          test -n "$REG" && test -n "$SEMI"
+          python3 kana-camera-overlay-30/ocr-training/generate_klee_ground_truth.py --regular "$REG" --semibold "$SEMI" --output /tmp/tesstrain/data/klee_jpn-ground-truth
+      - name: Fine-tune experimental candidate
+        working-directory: /tmp/tesstrain
+        run: |
+          make training MODEL_NAME=klee_jpn START_MODEL=jpn TESSDATA=/tmp/tessdata MAX_ITERATIONS=500 RATIO_TRAIN=0.85
+          make traineddata MODEL_NAME=klee_jpn START_MODEL=jpn TESSDATA=/tmp/tessdata
+      - name: Upload candidate and logs (not deployed)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: klee-ocr-experimental
+          path: |
+            /tmp/tesstrain/data/klee_jpn/**
+          retention-days: 7
