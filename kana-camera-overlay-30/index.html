@@ -401,7 +401,7 @@ function warpBox(box,m,refW,refH,outW,outH){
 }
 async function trackTick(){
  if(!active)return;
- if(referenceCanvas&&referenceItems.length&&!featureBusy&&!busy){
+ if(referenceCanvas&&referenceItems.length&&!featureBusy){
   featureBusy=true;
   try{
    if(window.jsfeat){if(!lkTrack()&&++lkFailures>=3){tracks=[];ctx.clearRect(0,0,overlay.width,overlay.height)}}else{
