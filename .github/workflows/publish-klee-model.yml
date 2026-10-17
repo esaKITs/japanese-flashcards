@@ -1,0 +1,36 @@
+name: Publish optional Klee OCR model
+on:
+  push:
+    paths:
+      - 'kana-camera-overlay-30/index.html'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch evaluated fast model from successful training
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/${{ github.repository }}/actions/artifacts/12086624161/zip > /tmp/model.zip
+          mkdir -p /tmp/model-artifact kana-camera-overlay-30/models
+          unzip -q /tmp/model.zip -d /tmp/model-artifact
+          MODEL=$(find /tmp/model-artifact -type f -path '*/tessdata_fast/klee_jpn_2.268_103_500.traineddata' | head -1)
+          test -n "$MODEL"
+          cp "$MODEL" kana-camera-overlay-30/models/klee_jpn.traineddata
+          test $(wc -c < kana-camera-overlay-30/models/klee_jpn.traineddata) -gt 1000000
+      - name: Commit optional model to Pages
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kana-camera-overlay-30/models/klee_jpn.traineddata
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish evaluated Klee OCR fallback model'
+            git push
+          fi
