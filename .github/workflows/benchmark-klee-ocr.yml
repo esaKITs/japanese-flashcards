@@ -1,0 +1,55 @@
+name: Benchmark Klee OCR on held-out lines
+on:
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OCR and image dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr python3-pil unzip
+      - name: Download fonts and baseline
+        run: |
+          git clone --depth 1 https://github.com/fontworks-fonts/Klee.git /tmp/klee
+          mkdir -p /tmp/baseline /tmp/candidate
+          curl -fLsS https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/main/jpn.traineddata -o /tmp/baseline/jpn.traineddata
+      - name: Retrieve previously trained model artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/actions/artifacts/12086624161/zip > /tmp/klee-artifact.zip
+          mkdir -p /tmp/klee-artifact
+          unzip -q /tmp/klee-artifact.zip -d /tmp/klee-artifact
+          find /tmp/klee-artifact -type f -name '*.traineddata' -printf '%p %s bytes\n'
+          MODEL=$(find /tmp/klee-artifact -type f -name 'klee_jpn_2.268_103_500.traineddata' -path '*/tessdata_fast/*' | head -1)
+          if [ -z "$MODEL" ]; then
+            MODEL=$(find /tmp/klee-artifact -type f -name 'klee_jpn.traineddata' | head -1)
+          fi
+          test -n "$MODEL"
+          cp "$MODEL" /tmp/candidate/klee_jpn.traineddata
+      - name: Compare Regular and SemiBold at multiple sizes
+        run: |
+          set -euo pipefail
+          : > /tmp/benchmark-results.txt
+          for style in Regular SemiBold; do
+            FONT=$(find /tmp/klee -type f \( -iname "*${style}*.ttf" -o -iname "*${style}*.otf" \) | head -1)
+            test -n "$FONT"
+            for size in 14 20 28 40; do
+              echo "=== ${style} ${size}px ===" | tee -a /tmp/benchmark-results.txt
+              python3 kana-camera-overlay-30/ocr-training/evaluate_models.py --font "$FONT" --size "$size" --baseline /tmp/baseline --candidate /tmp/candidate | tail -2 | tee -a /tmp/benchmark-results.txt
+            done
+          done
+          cat /tmp/benchmark-results.txt
+      - name: Upload comparison report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: klee-heldout-comparison
+          path: /tmp/benchmark-results.txt
+          retention-days: 14
